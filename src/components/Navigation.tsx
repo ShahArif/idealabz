@@ -8,8 +8,9 @@ const menuItems = [
   { label: "What's In It For You", href: '#benefits' },
   { label: 'The Process', href: '#process' },
   { label: 'FAQ', href: '#faq' },
-  { label: 'Join the Product Community', href: '#community' },
 ];
+
+const communityItem = { label: 'Join the Product Community', href: '#community' };
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,6 +48,14 @@ export const Navigation = () => {
                 {item.label}
               </button>
             ))}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => scrollToSection(communityItem.href)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              {communityItem.label}
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -75,6 +84,14 @@ export const Navigation = () => {
                   {item.label}
                 </button>
               ))}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => scrollToSection(communityItem.href)}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground mt-2 w-fit"
+              >
+                {communityItem.label}
+              </Button>
             </div>
           </div>
         )}

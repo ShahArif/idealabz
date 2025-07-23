@@ -73,21 +73,10 @@ export const HeroSlider = () => {
         <div className="absolute bottom-40 left-1/3 w-40 h-40 bg-innovation/30 rounded-full animate-float blur-2xl" style={{ animationDelay: '4s' }}></div>
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 mt-20">
+      <div className="container mx-auto px-6 relative z-10 mt-8">
         <div className="text-center max-w-4xl mx-auto">
-          {/* AI Robot */}
-          <div className="mb-8 animate-slide-up flex items-center justify-center">
-            <div className="flex justify-center">
-              <img 
-                src={aiRobot} 
-                alt="AI Robot" 
-                className="w-40 h-32 object-cover rounded-xl shadow-soft hover:shadow-glow transition-all duration-300"
-              />
-            </div>
-          </div>
-
           {/* Slider Content */}
-          <div className="relative h-80 flex items-center justify-center">
+          <div className="relative h-72 flex items-center justify-center mb-6">
             {heroSlides.map((slide, index) => (
               <div
                 key={index}
@@ -110,7 +99,7 @@ export const HeroSlider = () => {
           </div>
 
           {/* Navigation */}
-          <div className="flex justify-center gap-4 mb-8">
+          <div className="flex justify-center gap-4 mb-6">
             <Button
               variant="glow"
               size="icon"
@@ -130,7 +119,7 @@ export const HeroSlider = () => {
           </div>
 
           {/* Slide Indicators */}
-          <div className="flex justify-center gap-2 mb-12">
+          <div className="flex justify-center gap-2 mb-8">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
@@ -146,9 +135,11 @@ export const HeroSlider = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <Button variant="hero" size="xl" className="group">
-              <Lightbulb className="group-hover:animate-pulse" />
-              Submit Your Idea
+            <Button variant="hero" size="xl" className="group" asChild>
+              <a href="https://forms.gle/9zTTkeED7WXKkbF37" target="_blank" rel="noopener noreferrer">
+                <Lightbulb className="group-hover:animate-pulse" />
+                Submit Your Idea
+              </a>
             </Button>
             <Button variant="electric" size="xl" className="group">
               <Users className="group-hover:animate-pulse" />
