@@ -26,13 +26,16 @@ const heroSlides = [
 
 export const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
+    if (isPaused) return;
+    
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isPaused]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
@@ -43,7 +46,12 @@ export const HeroSlider = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-subtle">
+    <section 
+      id="home" 
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-subtle pt-16"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {/* AI-themed background elements */}
       <div className="absolute inset-0 opacity-10">
         <img 
@@ -65,21 +73,15 @@ export const HeroSlider = () => {
         <div className="absolute bottom-40 left-1/3 w-40 h-40 bg-innovation/30 rounded-full animate-float blur-2xl" style={{ animationDelay: '4s' }}></div>
       </div>
 
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto px-6 relative z-10 mt-20">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Logo/Brand with AI Robot */}
-          <div className="mb-8 animate-slide-up flex items-center justify-center gap-8">
-            <div className="text-center">
-              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-4">
-                IdeaLabs
-              </h1>
-              <div className="w-24 h-1 bg-gradient-primary mx-auto rounded-full"></div>
-            </div>
-            <div className="hidden lg:block">
+          {/* AI Robot */}
+          <div className="mb-8 animate-slide-up flex items-center justify-center">
+            <div className="flex justify-center">
               <img 
                 src={aiRobot} 
                 alt="AI Robot" 
-                className="w-32 h-24 object-cover rounded-xl shadow-soft hover:shadow-glow transition-all duration-300"
+                className="w-40 h-32 object-cover rounded-xl shadow-soft hover:shadow-glow transition-all duration-300"
               />
             </div>
           </div>

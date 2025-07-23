@@ -4,7 +4,7 @@ import aiNetworks from '@/assets/ai-networks.jpg';
 
 export const WhatIsIdeaLabs = () => {
   return (
-    <section className="py-20 bg-background">
+    <section id="about" className="py-20 bg-background">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
