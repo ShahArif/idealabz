@@ -45,7 +45,7 @@ const processSteps = [
 
 export const ProcessSection = () => {
   return (
-    <section className="py-20 bg-gradient-card">
+    <section className="py-20 bg-background">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -64,11 +64,11 @@ export const ProcessSection = () => {
                 className="group relative"
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
-                <div className="flex flex-col lg:flex-row items-center gap-8 p-8 bg-gradient-card rounded-2xl border border-border/50 hover:border-primary/30 transition-all duration-500">
+                <div className="flex flex-col lg:flex-row items-center gap-8 p-6 bg-card rounded-xl border border-border shadow-soft hover:shadow-glow transition-all duration-500">
                   {/* Step Number and Icon */}
                   <div className="flex-shrink-0 relative">
-                    <div className={`w-20 h-20 ${step.gradient} rounded-2xl flex items-center justify-center group-hover:${step.shadow} transition-all duration-300 group-hover:scale-110`}>
-                      <step.icon className="w-10 h-10 text-foreground group-hover:animate-pulse" />
+                    <div className={`w-16 h-16 ${step.gradient} rounded-xl flex items-center justify-center group-hover:shadow-soft transition-all duration-300 group-hover:scale-105`}>
+                      <step.icon className="w-8 h-8 text-foreground group-hover:animate-pulse" />
                     </div>
                     <div className="absolute -top-2 -right-2 w-8 h-8 bg-foreground text-background rounded-full flex items-center justify-center text-sm font-bold">
                       {step.number}
@@ -77,10 +77,10 @@ export const ProcessSection = () => {
 
                   {/* Content */}
                   <div className="flex-grow text-center lg:text-left">
-                    <h3 className="text-2xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors duration-300">
+                    <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
                       {step.title}
                     </h3>
-                    <p className="text-muted-foreground text-lg leading-relaxed">
+                    <p className="text-muted-foreground leading-relaxed">
                       {step.description}
                     </p>
                   </div>
@@ -91,8 +91,8 @@ export const ProcessSection = () => {
                   )}
                 </div>
 
-                {/* Hover effect */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"></div>
+                {/* Subtle hover effect */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-primary opacity-0 group-hover:opacity-3 transition-opacity duration-300 pointer-events-none"></div>
               </div>
             ))}
           </div>

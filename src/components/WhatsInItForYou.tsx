@@ -47,7 +47,7 @@ const benefits = [
 
 export const WhatsInItForYou = () => {
   return (
-    <section className="py-20 bg-background">
+    <section className="py-20 bg-gradient-subtle">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
@@ -60,32 +60,29 @@ export const WhatsInItForYou = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
             {benefits.map((benefit, index) => (
               <div
                 key={index}
-                className="group relative bg-gradient-card p-8 rounded-xl border border-border/50 hover:border-primary/30 transition-all duration-500 hover:scale-105"
+                className="group relative bg-card p-6 rounded-xl border border-border shadow-soft hover:shadow-glow transition-all duration-500 hover:scale-[1.02]"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className={`w-16 h-16 ${benefit.gradient} rounded-xl flex items-center justify-center mb-6 group-hover:${benefit.shadow} transition-all duration-300`}>
-                  <benefit.icon className="w-8 h-8 text-foreground group-hover:animate-pulse" />
+                <div className={`w-12 h-12 ${benefit.gradient} rounded-lg flex items-center justify-center mb-4 group-hover:shadow-soft transition-all duration-300`}>
+                  <benefit.icon className="w-6 h-6 text-foreground group-hover:animate-pulse" />
                 </div>
                 
-                <h3 className="text-xl font-bold text-foreground mb-4 group-hover:text-primary transition-colors duration-300">
+                <h3 className="text-lg font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
                   {benefit.title}
                 </h3>
                 
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   {benefit.description}
                 </p>
-
-                {/* Hover effect overlay */}
-                <div className="absolute inset-0 rounded-xl bg-gradient-primary opacity-0 group-hover:opacity-5 transition-opacity duration-300"></div>
               </div>
             ))}
           </div>
 
-          <div className="text-center bg-gradient-card p-8 rounded-2xl border border-border/50">
+          <div className="text-center bg-card p-8 rounded-xl border border-border shadow-soft">
             <p className="text-lg text-muted-foreground italic">
               <span className="text-innovation font-semibold">No matter where you start from</span>, 
               your curiosity, your ideas, and your initiative are all you need to begin.

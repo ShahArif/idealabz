@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Lightbulb, Users, Search } from 'lucide-react';
+import aiRobot from '@/assets/ai-robot-1.jpg';
+import aiNetworks from '@/assets/ai-networks.jpg';
+import aiBrain from '@/assets/ai-brain.jpg';
 
 const heroSlides = [
   {
@@ -40,22 +43,45 @@ export const HeroSlider = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-hero">
-      {/* Animated background elements */}
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-subtle">
+      {/* AI-themed background elements */}
+      <div className="absolute inset-0 opacity-10">
+        <img 
+          src={aiNetworks} 
+          alt="AI Networks" 
+          className="absolute top-0 right-0 w-1/2 h-1/2 object-cover blur-sm"
+        />
+        <img 
+          src={aiBrain} 
+          alt="AI Brain" 
+          className="absolute bottom-0 left-0 w-64 h-64 object-cover rounded-full blur-lg"
+        />
+      </div>
+
+      {/* Floating elements */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-20 w-32 h-32 bg-electric rounded-full animate-float blur-xl"></div>
-        <div className="absolute top-60 right-32 w-24 h-24 bg-innovation rounded-full animate-float blur-lg" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute bottom-40 left-1/3 w-40 h-40 bg-primary rounded-full animate-float blur-2xl" style={{ animationDelay: '4s' }}></div>
+        <div className="absolute top-20 left-20 w-32 h-32 bg-primary/30 rounded-full animate-float blur-xl"></div>
+        <div className="absolute top-60 right-32 w-24 h-24 bg-electric/30 rounded-full animate-float blur-lg" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-40 left-1/3 w-40 h-40 bg-innovation/30 rounded-full animate-float blur-2xl" style={{ animationDelay: '4s' }}></div>
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Logo/Brand */}
-          <div className="mb-8 animate-slide-up">
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-4">
-              IdeaLabs
-            </h1>
-            <div className="w-24 h-1 bg-gradient-primary mx-auto rounded-full"></div>
+          {/* Logo/Brand with AI Robot */}
+          <div className="mb-8 animate-slide-up flex items-center justify-center gap-8">
+            <div className="text-center">
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-hero bg-clip-text text-transparent mb-4">
+                IdeaLabs
+              </h1>
+              <div className="w-24 h-1 bg-gradient-primary mx-auto rounded-full"></div>
+            </div>
+            <div className="hidden lg:block">
+              <img 
+                src={aiRobot} 
+                alt="AI Robot" 
+                className="w-32 h-24 object-cover rounded-xl shadow-soft hover:shadow-glow transition-all duration-300"
+              />
+            </div>
           </div>
 
           {/* Slider Content */}
