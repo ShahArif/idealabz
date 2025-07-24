@@ -8,46 +8,46 @@ const processSteps = [
     id: "idea",
     number: "01",
     icon: Lightbulb,
-    title: "Idea Submission",
+    title: "Submit the Idea",
     description: "Submit your product idea through our simple form. Our team reviews and evaluates the potential.",
     details: "Every great product starts with a spark of inspiration. Submit your idea and we'll help you evaluate its market potential, technical feasibility, and business viability.",
-    visual: "💡"
+    image: "https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=600&h=400&fit=crop"
   },
   {
-    id: "evaluation",
+    id: "research",
     number: "02", 
     icon: Target,
-    title: "Evaluation & Selection",
-    description: "Ideas are evaluated for feasibility, market potential, and alignment with our capabilities.",
+    title: "Research and Support",
+    description: "Our experts conduct thorough market research and feasibility analysis for your idea.",
     details: "Our expert team conducts thorough market research, competitive analysis, and technical assessment to determine the best path forward for your idea.",
-    visual: "🎯"
+    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop"
   },
   {
-    id: "team",
+    id: "validation",
     number: "03",
     icon: Users,
-    title: "Team Formation",
-    description: "We assemble a cross-functional team including engineers, designers, and product managers.",
-    details: "You'll work alongside experienced professionals who bring diverse skills and perspectives to turn your vision into reality.",
-    visual: "👥"
+    title: "Idea Validation & Iteration",
+    description: "We validate your concept through user feedback and market testing methodologies.",
+    details: "Through user interviews, surveys, and prototype testing, we validate your concept and iterate based on real market feedback to ensure product-market fit.",
+    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=600&h=400&fit=crop"
   },
   {
-    id: "build",
+    id: "pitch",
     number: "04",
-    icon: Rocket,
-    title: "Build & Iterate",
-    description: "Using agile methodologies, we build, test, and refine your product iteratively.",
-    details: "Through rapid prototyping and user feedback, we ensure your product meets market needs and exceeds expectations.",
-    visual: "🚀"
+    icon: TrendingUp,
+    title: "Pitch to Leadership",
+    description: "Present your refined concept to leadership with comprehensive market analysis.",
+    details: "With validated data and refined concept, we help you prepare and present a compelling pitch to leadership, backed by market research and user validation.",
+    image: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&h=400&fit=crop"
   },
   {
     id: "launch",
     number: "05",
-    icon: TrendingUp,
-    title: "Launch & Scale",
-    description: "Successfully launch your product and scale it with continued support and optimization.",
-    details: "From go-to-market strategy to post-launch optimization, we support your product's journey to success.",
-    visual: "📈"
+    icon: Rocket,
+    title: "Launch the Product",
+    description: "Transform your validated idea into a market-ready product with our support.",
+    details: "From development to go-to-market strategy, we support your product's journey from concept to successful market launch and beyond.",
+    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&h=400&fit=crop"
   }
 ];
 
@@ -121,19 +121,20 @@ export const ProcessSection = () => {
 
               {/* Visual Content - Right Side */}
               <div className="lg:pl-8">
-                <div className="bg-background rounded-2xl shadow-soft p-8 h-96 flex items-center justify-center">
-                  <div className="text-center space-y-6">
-                    <div className="text-8xl animate-pulse">
-                      {activeStepData.visual}
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-xl font-semibold text-foreground">
-                        {activeStepData.title}
-                      </h4>
-                      <p className="text-muted-foreground">
-                        {activeStepData.description}
-                      </p>
-                    </div>
+                <div className="relative overflow-hidden rounded-2xl shadow-soft h-96">
+                  <img 
+                    src={activeStepData.image} 
+                    alt={activeStepData.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <h4 className="text-xl font-semibold text-foreground mb-2">
+                      Step {activeStepData.number}: {activeStepData.title}
+                    </h4>
+                    <p className="text-muted-foreground text-sm">
+                      {activeStepData.description}
+                    </p>
                   </div>
                 </div>
               </div>

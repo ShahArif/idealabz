@@ -9,18 +9,22 @@ const heroSlides = [
   {
     headline: "Become a Co-Founder",
     subheadline: "Take ownership of a product idea, drive it from scratch, and earn the title of co-founder — right here at Ideas2IT.",
+    ctaText: "Start Your Journey",
   },
   {
     headline: "Spark the Builder in You",
     subheadline: "Whether you're an engineer, PM, designer, or domain expert, you can now take an idea to a real product, supported by our structured incubation process.",
+    ctaText: "Submit Your Idea",
   },
   {
     headline: "Got an Idea? Let's Build It Together.",
     subheadline: "Every idea deserves a shot. At Idealabs, we help you shape it, build it, and maybe even launch it as the next big product.",
+    ctaText: "Let's Build It",
   },
   {
     headline: "Agents can automate execution. But vision? That still needs you.",
     subheadline: "That's still human. That's still you. Let's build it.",
+    ctaText: "Share Your Vision",
   },
 ];
 
@@ -91,9 +95,15 @@ export const HeroSlider = () => {
                 <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
                   {slide.headline}
                 </h2>
-                <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
                   {slide.subheadline}
                 </p>
+                <Button variant="hero" size="xl" className="group" asChild>
+                  <a href="https://forms.gle/9zTTkeED7WXKkbF37" target="_blank" rel="noopener noreferrer">
+                    <Lightbulb className="group-hover:animate-pulse" />
+                    {slide.ctaText}
+                  </a>
+                </Button>
               </div>
             ))}
           </div>
@@ -131,15 +141,6 @@ export const HeroSlider = () => {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <div className="flex justify-center animate-slide-up" style={{ animationDelay: '0.3s' }}>
-            <Button variant="hero" size="xl" className="group" asChild>
-              <a href="https://forms.gle/9zTTkeED7WXKkbF37" target="_blank" rel="noopener noreferrer">
-                <Lightbulb className="group-hover:animate-pulse" />
-                Submit Your Idea
-              </a>
-            </Button>
-          </div>
         </div>
       </div>
 
