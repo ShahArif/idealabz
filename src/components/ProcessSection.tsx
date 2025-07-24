@@ -38,7 +38,7 @@ const processSteps = [
     title: "Pitch to Leadership",
     description: "Present your refined concept to leadership with comprehensive market analysis.",
     details: "With validated data and refined concept, we help you prepare and present a compelling pitch to leadership, backed by market research and user validation.",
-    image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=400&fit=crop"
+    image: "https://img.uxcel.com/cdn-cgi/image/format=auto/tags/product-pitch-1725529007627-2x.jpg"
   },
   {
     id: "launch",
@@ -47,7 +47,7 @@ const processSteps = [
     title: "Launch the Product",
     description: "Transform your validated idea into a market-ready product with our support.",
     details: "From development to go-to-market strategy, we support your product's journey from concept to successful market launch and beyond.",
-    image: "https://images.unsplash.com/photo-1680022059077-f9b3c83b8b36?w=600&h=400&fit=crop"
+    image: "https://fireflies.ai/blog/content/images/size/w2000/2021/10/feat-min-2.png"
   }
 ];
 
@@ -72,7 +72,7 @@ export const ProcessSection = () => {
         {/* Tabs Layout */}
         <div className="max-w-7xl mx-auto">
           <Tabs value={activeStep} onValueChange={setActiveStep} className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-8">
+            <TabsList className="grid w-full grid-cols-5 mb-12">
               {processSteps.map((step) => (
                 <TabsTrigger 
                   key={step.id}
@@ -86,7 +86,7 @@ export const ProcessSection = () => {
               ))}
             </TabsList>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mt-8">
               {/* Text Content - Left Side */}
               <div className="space-y-6">
                 {processSteps.map((step) => (
