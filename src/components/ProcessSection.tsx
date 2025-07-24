@@ -11,7 +11,7 @@ const processSteps = [
     title: "Submit the Idea",
     description: "Submit your product idea through our simple form. Our team reviews and evaluates the potential.",
     details: "Every great product starts with a spark of inspiration. Submit your idea and we'll help you evaluate its market potential, technical feasibility, and business viability.",
-    image: "https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=600&h=400&fit=crop"
+    image: "https://cdn.shopify.com/s/files/1/0408/8443/7160/files/p080p3jc.jpg"
   },
   {
     id: "research",
@@ -20,7 +20,7 @@ const processSteps = [
     title: "Research and Support",
     description: "Our experts conduct thorough market research and feasibility analysis for your idea.",
     details: "Our expert team conducts thorough market research, competitive analysis, and technical assessment to determine the best path forward for your idea.",
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop"
+    image: "https://cdn.prod.website-files.com/62c41df069f3e62476a3ccbe/62c53890b83d755c8376f871_629eefd383ef76091b371e9b_viaxsXEmtOwsXNBb3TxZcB8tsZuh5kGlzdHsDpJEvvY-nnOIZRvI-if2D16u5ehYqck1EfCxtELYgSLjFe3_hTkPJzxNUeKDum4a6T339OLpFXfI4y38R1YQt_waDQt6DawB68Y.png"
   },
   {
     id: "validation",
@@ -29,7 +29,7 @@ const processSteps = [
     title: "Idea Validation & Iteration",
     description: "We validate your concept through user feedback and market testing methodologies.",
     details: "Through user interviews, surveys, and prototype testing, we validate your concept and iterate based on real market feedback to ensure product-market fit.",
-    image: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?w=600&h=400&fit=crop"
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop"
   },
   {
     id: "pitch",
@@ -38,7 +38,7 @@ const processSteps = [
     title: "Pitch to Leadership",
     description: "Present your refined concept to leadership with comprehensive market analysis.",
     details: "With validated data and refined concept, we help you prepare and present a compelling pitch to leadership, backed by market research and user validation.",
-    image: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=600&h=400&fit=crop"
+    image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=400&fit=crop"
   },
   {
     id: "launch",
@@ -47,7 +47,7 @@ const processSteps = [
     title: "Launch the Product",
     description: "Transform your validated idea into a market-ready product with our support.",
     details: "From development to go-to-market strategy, we support your product's journey from concept to successful market launch and beyond.",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&h=400&fit=crop"
+    image: "https://images.unsplash.com/photo-1680022059077-f9b3c83b8b36?w=600&h=400&fit=crop"
   }
 ];
 
@@ -77,7 +77,7 @@ export const ProcessSection = () => {
                 <TabsTrigger 
                   key={step.id}
                   value={step.id}
-                  className="flex flex-col items-center gap-2 p-4 data-[state=active]:bg-background data-[state=active]:text-foreground"
+                  className="flex flex-col items-center gap-2 p-4 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
                   <span className="text-xs font-medium text-muted-foreground">{step.number}</span>
                   <step.icon className="w-4 h-4" />
@@ -120,22 +120,13 @@ export const ProcessSection = () => {
               </div>
 
               {/* Visual Content - Right Side */}
-              <div className="lg:pl-8">
-                <div className="relative overflow-hidden rounded-2xl shadow-soft h-96">
+              <div className="lg:pl-8 mt-8 lg:mt-0">
+                <div className="overflow-hidden rounded-2xl shadow-soft h-96">
                   <img 
                     src={activeStepData.image} 
                     alt={activeStepData.title}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent"></div>
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <h4 className="text-xl font-semibold text-foreground mb-2">
-                      Step {activeStepData.number}: {activeStepData.title}
-                    </h4>
-                    <p className="text-muted-foreground text-sm">
-                      {activeStepData.description}
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
