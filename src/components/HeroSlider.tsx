@@ -98,25 +98,23 @@ export const HeroSlider = () => {
             ))}
           </div>
 
-          {/* Navigation */}
-          <div className="flex justify-center gap-4 mb-6">
-            <Button
-              variant="glow"
-              size="icon"
-              onClick={prevSlide}
-              className="rounded-full"
-            >
-              <ChevronLeft />
-            </Button>
-            <Button
-              variant="glow"
-              size="icon"
-              onClick={nextSlide}
-              className="rounded-full"
-            >
-              <ChevronRight />
-            </Button>
-          </div>
+          {/* Navigation - Screen End Arrows */}
+          <Button
+            variant="glow"
+            size="lg"
+            onClick={prevSlide}
+            className="fixed left-4 top-1/2 -translate-y-1/2 z-20 rounded-full w-16 h-16"
+          >
+            <ChevronLeft size={32} />
+          </Button>
+          <Button
+            variant="glow"
+            size="lg"
+            onClick={nextSlide}
+            className="fixed right-4 top-1/2 -translate-y-1/2 z-20 rounded-full w-16 h-16"
+          >
+            <ChevronRight size={32} />
+          </Button>
 
           {/* Slide Indicators */}
           <div className="flex justify-center gap-2 mb-6">
