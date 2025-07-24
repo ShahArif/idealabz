@@ -4,7 +4,7 @@ import { WhatIsIdeaLabs } from '@/components/WhatIsIdeaLabs';
 import { WhatsInItForYou } from '@/components/WhatsInItForYou';
 import { ProcessSection } from '@/components/ProcessSection';
 import { FAQSection } from '@/components/FAQSection';
-import { ProductCommunity } from '@/components/ProductCommunity';
+
 
 const Index = () => {
   return (
@@ -15,7 +15,6 @@ const Index = () => {
       <WhatsInItForYou />
       <ProcessSection />
       <FAQSection />
-      <ProductCommunity />
     </div>
   );
 };

@@ -119,7 +119,7 @@ export const HeroSlider = () => {
           </div>
 
           {/* Slide Indicators */}
-          <div className="flex justify-center gap-2 mb-8">
+          <div className="flex justify-center gap-2 mb-6">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
@@ -133,21 +133,13 @@ export const HeroSlider = () => {
             ))}
           </div>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          {/* CTA Button */}
+          <div className="flex justify-center animate-slide-up" style={{ animationDelay: '0.3s' }}>
             <Button variant="hero" size="xl" className="group" asChild>
               <a href="https://forms.gle/9zTTkeED7WXKkbF37" target="_blank" rel="noopener noreferrer">
                 <Lightbulb className="group-hover:animate-pulse" />
                 Submit Your Idea
               </a>
-            </Button>
-            <Button variant="electric" size="xl" className="group">
-              <Users className="group-hover:animate-pulse" />
-              Join a PoC Team
-            </Button>
-            <Button variant="innovation" size="xl" className="group">
-              <Search className="group-hover:animate-pulse" />
-              See What's Cooking
             </Button>
           </div>
         </div>

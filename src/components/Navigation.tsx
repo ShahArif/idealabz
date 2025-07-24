@@ -10,7 +10,7 @@ const menuItems = [
   { label: 'FAQ', href: '#faq' },
 ];
 
-const communityItem = { label: 'Join the Product Community', href: '#community' };
+const highlightedItem = { label: "See What's Cooking", href: '#cooking' };
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,10 +51,10 @@ export const Navigation = () => {
             <Button
               variant="default"
               size="sm"
-              onClick={() => scrollToSection(communityItem.href)}
+              onClick={() => scrollToSection(highlightedItem.href)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {communityItem.label}
+              {highlightedItem.label}
             </Button>
           </div>
 
@@ -87,10 +87,10 @@ export const Navigation = () => {
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => scrollToSection(communityItem.href)}
+                onClick={() => scrollToSection(highlightedItem.href)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground mt-2 w-fit"
               >
-                {communityItem.label}
+                {highlightedItem.label}
               </Button>
             </div>
           </div>

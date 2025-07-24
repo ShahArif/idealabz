@@ -80,6 +80,16 @@ export const WhatIsIdeaLabs = () => {
             </div>
           </div>
         </div>
+
+        {/* CTA Section */}
+        <div className="text-center mt-12">
+          <Button variant="default" size="lg" asChild>
+            <a href="https://forms.gle/9zTTkeED7WXKkbF37" target="_blank" rel="noopener noreferrer">
+              <Lightbulb className="w-4 h-4" />
+              Submit Your Idea
+            </a>
+          </Button>
+        </div>
       </div>
     </section>
   );

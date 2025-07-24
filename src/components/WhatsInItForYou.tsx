@@ -1,4 +1,5 @@
-import { Crown, TrendingUp, Users, Target, Award, Cpu } from 'lucide-react';
+import { Crown, TrendingUp, Users, Target, Award, Cpu, Lightbulb } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const benefits = [
   {
@@ -87,6 +88,24 @@ export const WhatsInItForYou = () => {
               <span className="text-innovation font-semibold">No matter where you start from</span>, 
               your curiosity, your ideas, and your initiative are all you need to begin.
             </p>
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="text-center mt-12">
+          <div className="bg-background rounded-2xl shadow-soft p-6 max-w-md mx-auto">
+            <h3 className="text-xl font-bold text-foreground mb-3">
+              Ready to Get Started?
+            </h3>
+            <p className="text-muted-foreground mb-4 text-sm">
+              Take the first step towards bringing your idea to life.
+            </p>
+            <Button variant="default" size="lg" asChild>
+              <a href="https://forms.gle/9zTTkeED7WXKkbF37" target="_blank" rel="noopener noreferrer">
+                <Lightbulb className="w-4 h-4" />
+                Submit Your Idea
+              </a>
+            </Button>
           </div>
         </div>
       </div>
