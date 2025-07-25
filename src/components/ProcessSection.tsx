@@ -86,9 +86,9 @@ export const ProcessSection = () => {
               ))}
             </TabsList>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mt-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mt-12">
               {/* Text Content - Left Side */}
-              <div className="space-y-6">
+              <div className="space-y-6 flex flex-col justify-center">
                 {processSteps.map((step) => (
                   <TabsContent key={step.id} value={step.id} className="mt-0">
                     <div className="space-y-6">
@@ -120,12 +120,12 @@ export const ProcessSection = () => {
               </div>
 
               {/* Visual Content - Right Side */}
-              <div className="lg:pl-8 mt-8 lg:mt-0">
-                <div className="overflow-hidden rounded-2xl shadow-soft h-96">
+              <div className="lg:pl-8 mt-12 lg:mt-8">
+                <div className="overflow-hidden rounded-2xl shadow-soft h-80 lg:h-96 w-full">
                   <img 
                     src={activeStepData.image} 
                     alt={activeStepData.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
                 </div>
               </div>
