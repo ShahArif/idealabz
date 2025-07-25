@@ -14,16 +14,225 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          idea_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          idea_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          idea_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          idea_id: string
+          is_internal: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          idea_id: string
+          is_internal?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          idea_id?: string
+          is_internal?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ideas: {
+        Row: {
+          category: Database["public"]["Enums"]["idea_category"]
+          created_at: string
+          description: string
+          id: string
+          prd_url: string | null
+          problem_statement: string
+          stage: Database["public"]["Enums"]["idea_stage"]
+          submitted_by: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["idea_category"]
+          created_at?: string
+          description: string
+          id?: string
+          prd_url?: string | null
+          problem_statement: string
+          stage?: Database["public"]["Enums"]["idea_stage"]
+          submitted_by: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["idea_category"]
+          created_at?: string
+          description?: string
+          id?: string
+          prd_url?: string | null
+          problem_statement?: string
+          stage?: Database["public"]["Enums"]["idea_stage"]
+          submitted_by?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      status_updates: {
+        Row: {
+          action: string
+          comment: string | null
+          created_at: string
+          id: string
+          idea_id: string
+          new_stage: Database["public"]["Enums"]["idea_stage"]
+          previous_stage: Database["public"]["Enums"]["idea_stage"] | null
+          updated_by: string
+        }
+        Insert: {
+          action: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          idea_id: string
+          new_stage: Database["public"]["Enums"]["idea_stage"]
+          previous_stage?: Database["public"]["Enums"]["idea_stage"] | null
+          updated_by: string
+        }
+        Update: {
+          action?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          idea_id?: string
+          new_stage?: Database["public"]["Enums"]["idea_stage"]
+          previous_stage?: Database["public"]["Enums"]["idea_stage"] | null
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_updates_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_core_team_or_admin: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "super_admin"
+        | "idealabs_core_team"
+        | "idea_mentor"
+        | "employee"
+      idea_category: "technology" | "process" | "product" | "service" | "other"
+      idea_stage:
+        | "pending"
+        | "basic_review"
+        | "tech_review"
+        | "ready_for_pitch"
+        | "mvp_poc"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +359,21 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "super_admin",
+        "idealabs_core_team",
+        "idea_mentor",
+        "employee",
+      ],
+      idea_category: ["technology", "process", "product", "service", "other"],
+      idea_stage: [
+        "pending",
+        "basic_review",
+        "tech_review",
+        "ready_for_pitch",
+        "mvp_poc",
+      ],
+    },
   },
 } as const
