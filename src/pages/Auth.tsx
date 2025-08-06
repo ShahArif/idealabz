@@ -25,7 +25,7 @@ const Auth = () => {
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: isAdminMode ? 'admin@test.com' : '',
+      email: isAdminMode ? 'admin@ideas2it.com' : '',
       password: isAdminMode ? 'admin1234' : '',
     },
   });
@@ -102,7 +102,7 @@ const Auth = () => {
                   <Input
                     id="admin-username"
                     type="email"
-                    placeholder="admin@test.com"
+                    placeholder="admin@ideas2it.com"
                     {...signInForm.register('email')}
                   />
                   {signInForm.formState.errors.email && (

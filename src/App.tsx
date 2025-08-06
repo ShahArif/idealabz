@@ -14,7 +14,7 @@ const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const { user } = useAuth();
-  const isAdmin = user?.email === 'admin@test.com';
+  const isAdmin = user?.email === 'admin@ideas2it.com';
 
   return (
     <Routes>
