@@ -96,6 +96,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Handle admin login
+      if (email === 'admin' && password === 'admin1234') {
+        // Create a mock admin session
+        const adminUser = {
+          id: 'admin-user-id',
+          email: 'admin@ideas2it.com',
+          user_metadata: { first_name: 'Admin', last_name: 'User' },
+          aud: 'authenticated',
+          role: 'authenticated',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          app_metadata: { role: 'admin' }
+        } as any;
+        
+        setUser(adminUser);
+        setSession({ user: adminUser, access_token: 'admin-token' } as any);
+        
+        toast({
+          title: "Welcome Admin!",
+          description: "You have been signed in successfully.",
+        });
+        
+        return { error: null };
+      }
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,

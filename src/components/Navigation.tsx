@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const menuItems = [
   { label: 'Home', href: '#home' },
@@ -14,6 +15,7 @@ const highlightedItem = { label: "See What's Cooking", href: '#cooking' };
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -51,7 +53,7 @@ export const Navigation = () => {
             <Button
               variant="default"
               size="sm"
-              onClick={() => scrollToSection(highlightedItem.href)}
+              onClick={() => navigate('/auth?admin=true')}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {highlightedItem.label}
@@ -87,7 +89,7 @@ export const Navigation = () => {
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => scrollToSection(highlightedItem.href)}
+                onClick={() => navigate('/auth?admin=true')}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground mt-2 w-fit"
               >
                 {highlightedItem.label}

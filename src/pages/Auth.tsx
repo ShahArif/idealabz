@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,14 +17,16 @@ type SignUpFormData = z.infer<typeof signUpSchema>;
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn, signUp, user, loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isAdminMode = searchParams.get('admin') === 'true';
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: isAdminMode ? 'admin' : '',
+      password: isAdminMode ? 'admin1234' : '',
     },
   });
 
@@ -81,17 +83,66 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">IdeaLabs Platform</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {isAdminMode ? 'Admin Access' : 'IdeaLabs Platform'}
+          </CardTitle>
           <CardDescription>
-            Join the Ideas2IT innovation platform to submit and track your ideas
+            {isAdminMode 
+              ? 'Admin login to access the platform dashboard'
+              : 'Join the Ideas2IT innovation platform to submit and track your ideas'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+          {isAdminMode ? (
+            <div className="space-y-4">
+              <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="admin-username">Username</Label>
+                  <Input
+                    id="admin-username"
+                    placeholder="admin"
+                    {...signInForm.register('email')}
+                  />
+                  {signInForm.formState.errors.email && (
+                    <p className="text-sm text-destructive">
+                      {signInForm.formState.errors.email.message}
+                    </p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="admin-password">Password</Label>
+                  <Input
+                    id="admin-password"
+                    type="password"
+                    {...signInForm.register('password')}
+                  />
+                  {signInForm.formState.errors.password && (
+                    <p className="text-sm text-destructive">
+                      {signInForm.formState.errors.password.message}
+                    </p>
+                  )}
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Admin Sign In'
+                  )}
+                </Button>
+              </form>
+            </div>
+          ) : (
+            <Tabs defaultValue="signin" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
             
             <TabsContent value="signin" className="space-y-4">
               <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
@@ -213,7 +264,8 @@ const Auth = () => {
                 </Button>
               </form>
             </TabsContent>
-          </Tabs>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>
