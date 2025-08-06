@@ -228,11 +228,11 @@ export type Database = {
         | "employee"
       idea_category: "technology" | "process" | "product" | "service" | "other"
       idea_stage:
-        | "pending"
-        | "basic_review"
-        | "tech_review"
-        | "ready_for_pitch"
-        | "mvp_poc"
+        | "discovery"
+        | "basic_validation"
+        | "tech_validation"
+        | "leadership_pitch"
+        | "mvp"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -368,11 +368,11 @@ export const Constants = {
       ],
       idea_category: ["technology", "process", "product", "service", "other"],
       idea_stage: [
-        "pending",
-        "basic_review",
-        "tech_review",
-        "ready_for_pitch",
-        "mvp_poc",
+        "discovery",
+        "basic_validation",
+        "tech_validation",
+        "leadership_pitch",
+        "mvp",
       ],
     },
   },

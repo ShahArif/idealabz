@@ -8,7 +8,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
-import EmployeeDashboard from "./pages/EmployeeDashboard";
+import IdeatorDashboard from "./pages/EmployeeDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,7 +22,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
-      <Route path="/ideator" element={isEmployee ? <EmployeeDashboard /> : <Navigate to="/auth" />} />
+      <Route path="/ideator" element={isEmployee ? <IdeatorDashboard /> : <Navigate to="/auth" />} />
       <Route path="/" element={
         isAdmin ? <Navigate to="/admin" /> : 
         isEmployee ? <Navigate to="/ideator" /> : 

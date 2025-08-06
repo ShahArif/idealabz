@@ -2,6 +2,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { IdeaFunnelView } from '@/components/IdeaFunnelView';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Plus, 
   Lightbulb, 
@@ -12,90 +15,132 @@ import {
   Clock,
   AlertCircle,
   FileText,
-  Users
+  Users,
+  Loader2
 } from 'lucide-react';
 
-const EmployeeDashboard = () => {
+const IdeatorDashboard = () => {
   const { user, signOut } = useAuth();
 
-  const myIdeas = [
-    {
-      id: 1,
-      title: "AI-Powered Code Review Assistant",
-      status: "in-review",
-      date: "2024-01-15",
-      votes: 12,
-      comments: 3
+  // Fetch user's ideas from Supabase
+  const { data: ideas = [], isLoading, error } = useQuery({
+    queryKey: ['user-ideas', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('*')
+        .eq('submitted_by', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data || [];
     },
-    {
-      id: 2,
-      title: "Employee Wellness Tracking App", 
-      status: "approved",
-      date: "2024-01-10",
-      votes: 8,
-      comments: 5
-    },
-    {
-      id: 3,
-      title: "Smart Meeting Room Booking System",
-      status: "pending",
-      date: "2024-01-08",
-      votes: 15,
-      comments: 2
-    }
-  ];
+    enabled: !!user?.id,
+  });
 
-  const recentActivity = [
-    {
-      type: "comment",
-      message: "New comment on your idea 'AI-Powered Code Review Assistant'",
-      time: "2 hours ago"
-    },
-    {
-      type: "status",
-      message: "Your idea 'Employee Wellness App' was approved!",
-      time: "1 day ago"
-    },
-    {
-      type: "vote",
-      message: "Your idea 'Smart Meeting Room' received 3 new votes",
-      time: "2 days ago"
-    }
-  ];
+  // Fetch recent activity (comments and status updates)
+  const { data: recentActivity = [] } = useQuery({
+    queryKey: ['recent-activity', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      // Get recent comments on user's ideas
+      const { data: comments } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          idea_id,
+          ideas!inner(title, submitted_by)
+        `)
+        .eq('ideas.submitted_by', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved': return 'bg-green-500';
-      case 'in-review': return 'bg-yellow-500';
-      case 'pending': return 'bg-gray-500';
-      case 'rejected': return 'bg-red-500';
-      default: return 'bg-gray-500';
-    }
-  };
+      // Get recent status updates for user's ideas
+      const { data: statusUpdates } = await supabase
+        .from('status_updates')
+        .select(`
+          id,
+          action,
+          comment,
+          new_stage,
+          created_at,
+          idea_id,
+          ideas!inner(title, submitted_by)
+        `)
+        .eq('ideas.submitted_by', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'approved': return 'Approved';
-      case 'in-review': return 'In Review';
-      case 'pending': return 'Pending';
-      case 'rejected': return 'Rejected';
-      default: return 'Unknown';
-    }
-  };
+      // Combine and sort by date
+      const allActivity = [
+        ...(comments || []).map(c => ({
+          type: 'comment',
+          message: `New comment on "${c.ideas.title}"`,
+          time: c.created_at,
+          id: c.id
+        })),
+        ...(statusUpdates || []).map(s => ({
+          type: 'status',
+          message: `"${s.ideas.title}" moved to ${s.new_stage.replace('_', ' ')}`,
+          time: s.created_at,
+          id: s.id
+        }))
+      ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
+
+      return allActivity;
+    },
+    enabled: !!user?.id,
+  });
 
   const getActivityIcon = (type: string) => {
     switch (type) {
       case 'comment': return MessageSquare;
       case 'status': return CheckCircle;
-      case 'vote': return TrendingUp;
       default: return AlertCircle;
     }
   };
 
-  const totalIdeas = myIdeas.length;
-  const approvedIdeas = myIdeas.filter(idea => idea.status === 'approved').length;
-  const pendingIdeas = myIdeas.filter(idea => idea.status === 'pending').length;
-  const totalVotes = myIdeas.reduce((sum, idea) => sum + idea.votes, 0);
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${Math.floor(diffInHours)} hours ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return '1 day ago';
+    return `${diffInDays} days ago`;
+  };
+
+  // Calculate stats
+  const totalIdeas = ideas.length;
+  const completedIdeas = ideas.filter(idea => idea.stage === 'mvp').length;
+  const inProgressIdeas = ideas.filter(idea => ['basic_validation', 'tech_validation', 'leadership_pitch'].includes(idea.stage)).length;
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Error Loading Dashboard</h2>
+          <p className="text-muted-foreground">Please try refreshing the page</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,7 +149,7 @@ const EmployeeDashboard = () => {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">My Ideas Dashboard</h1>
+              <h1 className="text-2xl font-bold">Ideator Dashboard</h1>
               <p className="text-muted-foreground">
                 Welcome back, {user?.user_metadata?.first_name || user?.email?.split('@')[0]}
               </p>
@@ -112,7 +157,7 @@ const EmployeeDashboard = () => {
             <div className="flex items-center gap-4">
               <Badge variant="secondary" className="gap-2">
                 <Users className="h-3 w-3" />
-                Employee
+                Ideator
               </Badge>
               <Button size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -151,25 +196,9 @@ const EmployeeDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Approved
+                    In Progress
                   </p>
-                  <p className="text-2xl font-bold">{approvedIdeas}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-green-500/20">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Pending
-                  </p>
-                  <p className="text-2xl font-bold">{pendingIdeas}</p>
+                  <p className="text-2xl font-bold">{inProgressIdeas}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-yellow-500/20">
                   <Clock className="h-6 w-6 text-yellow-600" />
@@ -183,9 +212,27 @@ const EmployeeDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Total Votes
+                    Completed (MVP)
                   </p>
-                  <p className="text-2xl font-bold">{totalVotes}</p>
+                  <p className="text-2xl font-bold">{completedIdeas}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-green-500/20">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Success Rate
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {totalIdeas > 0 ? Math.round((completedIdeas / totalIdeas) * 100) : 0}%
+                  </p>
                 </div>
                 <div className="p-3 rounded-lg bg-purple-500/20">
                   <TrendingUp className="h-6 w-6 text-purple-600" />
@@ -195,54 +242,15 @@ const EmployeeDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* My Ideas */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5" />
-                  My Ideas
-                </CardTitle>
-                <CardDescription>
-                  Track the status of your submitted ideas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {myIdeas.map((idea) => (
-                  <div key={idea.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/50 transition-colors">
-                    <div className="flex-1">
-                      <h4 className="font-medium mb-1">{idea.title}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Submitted on {idea.date}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="h-4 w-4" />
-                          {idea.votes}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-4 w-4" />
-                          {idea.comments}
-                        </div>
-                      </div>
-                      <Badge 
-                        variant="secondary" 
-                        className={`${getStatusColor(idea.status)} text-white`}
-                      >
-                        {getStatusText(idea.status)}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Idea Funnel - Takes 3 columns */}
+          <div className="lg:col-span-3">
+            <IdeaFunnelView ideas={ideas} />
           </div>
 
-          {/* Recent Activity & Quick Actions */}
+          {/* Sidebar - Takes 1 column */}
           <div className="space-y-6">
+            {/* Recent Activity */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -251,21 +259,28 @@ const EmployeeDashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {recentActivity.map((activity, index) => {
-                  const IconComponent = getActivityIcon(activity.type);
-                  return (
-                    <div key={index} className="flex gap-3 p-3 border rounded-lg">
-                      <IconComponent className="h-4 w-4 mt-1 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm">{activity.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
+                {recentActivity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No recent activity</p>
+                ) : (
+                  recentActivity.map((activity) => {
+                    const IconComponent = getActivityIcon(activity.type);
+                    return (
+                      <div key={activity.id} className="flex gap-3 p-3 border rounded-lg">
+                        <IconComponent className="h-4 w-4 mt-1 text-muted-foreground" />
+                        <div className="flex-1">
+                          <p className="text-sm">{activity.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatTimeAgo(activity.time)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
 
+            {/* Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
@@ -292,4 +307,4 @@ const EmployeeDashboard = () => {
   );
 };
 
-export default EmployeeDashboard;
+export default IdeatorDashboard;
