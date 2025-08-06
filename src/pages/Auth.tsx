@@ -21,12 +21,13 @@ const Auth = () => {
   const { signIn, signUp, user, loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isAdminMode = searchParams.get('admin') === 'true';
+  const isIdeatorMode = window.location.pathname === '/ideator';
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: isAdminMode ? 'admin@ideas2it.com' : '',
-      password: isAdminMode ? 'admin1234' : '',
+      email: isAdminMode ? 'admin@ideas2it.com' : isIdeatorMode ? 'arif@ideas2it.com' : '',
+      password: isAdminMode ? 'admin1234' : isIdeatorMode ? 'test@1234' : '',
     },
   });
 
@@ -84,25 +85,27 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            {isAdminMode ? 'Admin Access' : 'IdeaLabs Platform'}
+            {isAdminMode ? 'Admin Access' : isIdeatorMode ? 'Ideator Login' : 'IdeaLabs Platform'}
           </CardTitle>
           <CardDescription>
             {isAdminMode 
               ? 'Admin login to access the platform dashboard'
-              : 'Join the Ideas2IT innovation platform to submit and track your ideas'
+              : isIdeatorMode
+                ? 'Login as an ideator to track your submitted ideas'
+                : 'Join the Ideas2IT innovation platform to submit and track your ideas'
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isAdminMode ? (
+          {(isAdminMode || isIdeatorMode) ? (
             <div className="space-y-4">
               <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="admin-username">Email</Label>
+                  <Label htmlFor="login-username">Email</Label>
                   <Input
-                    id="admin-username"
+                    id="login-username"
                     type="email"
-                    placeholder="admin@ideas2it.com"
+                    placeholder={isAdminMode ? "admin@ideas2it.com" : "arif@ideas2it.com"}
                     {...signInForm.register('email')}
                   />
                   {signInForm.formState.errors.email && (
@@ -113,9 +116,9 @@ const Auth = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="admin-password">Password</Label>
+                  <Label htmlFor="login-password">Password</Label>
                   <Input
-                    id="admin-password"
+                    id="login-password"
                     type="password"
                     {...signInForm.register('password')}
                   />
@@ -133,7 +136,7 @@ const Auth = () => {
                       Signing in...
                     </>
                   ) : (
-                    'Admin Sign In'
+                    isAdminMode ? 'Admin Sign In' : 'Ideator Sign In'
                   )}
                 </Button>
               </form>

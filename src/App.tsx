@@ -21,8 +21,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
+      <Route path="/ideator" element={isEmployee ? <IdeatorDashboard /> : <Auth />} />
       <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
-      <Route path="/ideator" element={isEmployee ? <IdeatorDashboard /> : <Navigate to="/auth" />} />
       <Route path="/" element={
         isAdmin ? <Navigate to="/admin" /> : 
         isEmployee ? <Navigate to="/ideator" /> : 
