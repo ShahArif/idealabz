@@ -196,14 +196,25 @@ export const UserManagement = () => {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      // Delete from auth.users - this will cascade to profiles table
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      // Use secure backend endpoint for user deletion
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
 
       if (error) {
         toast({
           variant: "destructive",
           title: "Error",
           description: error.message
+        });
+        return;
+      }
+
+      if (data?.error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error
         });
         return;
       }
