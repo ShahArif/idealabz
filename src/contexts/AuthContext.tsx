@@ -97,11 +97,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     try {
       // Handle admin login
-      if (email === 'admin' && password === 'admin1234') {
+      if (email === 'admin@test.com' && password === 'admin1234') {
         // Create a mock admin session
         const adminUser = {
           id: 'admin-user-id',
-          email: 'admin@ideas2it.com',
+          email: 'admin@test.com',
           user_metadata: { first_name: 'Admin', last_name: 'User' },
           aud: 'authenticated',
           role: 'authenticated',
