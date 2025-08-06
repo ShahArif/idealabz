@@ -229,6 +229,9 @@ export type Database = {
         | "idealabs_core_team"
         | "idea_mentor"
         | "employee"
+        | "leader"
+        | "tech_expert"
+        | "product_expert"
       idea_category: "technology" | "process" | "product" | "service" | "other"
       idea_stage:
         | "discovery"
@@ -368,6 +371,9 @@ export const Constants = {
         "idealabs_core_team",
         "idea_mentor",
         "employee",
+        "leader",
+        "tech_expert",
+        "product_expert",
       ],
       idea_category: ["technology", "process", "product", "service", "other"],
       idea_stage: [
