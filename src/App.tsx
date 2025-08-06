@@ -22,10 +22,10 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
-      <Route path="/dashboard" element={isEmployee ? <EmployeeDashboard /> : <Navigate to="/auth" />} />
+      <Route path="/ideator" element={isEmployee ? <EmployeeDashboard /> : <Navigate to="/auth" />} />
       <Route path="/" element={
         isAdmin ? <Navigate to="/admin" /> : 
-        isEmployee ? <Navigate to="/dashboard" /> : 
+        isEmployee ? <Navigate to="/ideator" /> : 
         <Index />
       } />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
