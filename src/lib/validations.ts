@@ -40,17 +40,21 @@ export const signInSchema = z.object({
 export const ideaSubmissionSchema = z.object({
   title: z
     .string()
-    .min(5, "Title must be at least 5 characters long")
+    .min(1, "Title is required")
     .max(100, "Title must be less than 100 characters"),
   description: z
     .string()
-    .min(20, "Description must be at least 20 characters long")
-    .max(2000, "Description must be less than 2000 characters"),
-  problemStatement: z
+    .min(10, "Description must be at least 10 characters")
+    .max(1000, "Description must be less than 1000 characters"),
+  problem_statement: z
     .string()
-    .min(20, "Problem statement must be at least 20 characters long")
+    .min(10, "Problem statement must be at least 10 characters")
     .max(1000, "Problem statement must be less than 1000 characters"),
-  prdUrl: z
+  target_audience: z
+    .string()
+    .min(5, "Target audience must be at least 5 characters")
+    .max(500, "Target audience must be less than 500 characters"),
+  prd_url: z
     .string()
     .url("Please enter a valid URL")
     .optional()

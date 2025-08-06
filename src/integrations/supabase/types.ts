@@ -104,6 +104,7 @@ export type Database = {
           stage: Database["public"]["Enums"]["idea_stage"]
           submitted_by: string
           tags: string[] | null
+          target_audience: string | null
           title: string
           updated_at: string
         }
@@ -117,6 +118,7 @@ export type Database = {
           stage?: Database["public"]["Enums"]["idea_stage"]
           submitted_by: string
           tags?: string[] | null
+          target_audience?: string | null
           title: string
           updated_at?: string
         }
@@ -130,6 +132,7 @@ export type Database = {
           stage?: Database["public"]["Enums"]["idea_stage"]
           submitted_by?: string
           tags?: string[] | null
+          target_audience?: string | null
           title?: string
           updated_at?: string
         }

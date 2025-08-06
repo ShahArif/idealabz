@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { IdeaFunnelView } from '@/components/IdeaFunnelView';
+import { IdeaSubmissionForm } from '@/components/IdeaSubmissionForm';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -23,7 +24,7 @@ const IdeatorDashboard = () => {
   const { user, signOut } = useAuth();
 
   // Fetch user's ideas from Supabase
-  const { data: ideas = [], isLoading, error } = useQuery({
+  const { data: ideas = [], isLoading, error, refetch: refetchIdeas } = useQuery({
     queryKey: ['user-ideas', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -159,10 +160,7 @@ const IdeatorDashboard = () => {
                 <Users className="h-3 w-3" />
                 Ideator
               </Badge>
-              <Button size="sm" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Submit New Idea
-              </Button>
+              <IdeaSubmissionForm onIdeaSubmitted={refetchIdeas} />
               <Button variant="outline" size="sm" onClick={signOut} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 Sign Out
@@ -286,10 +284,7 @@ const IdeatorDashboard = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start gap-2">
-                  <Plus className="h-4 w-4" />
-                  Submit New Idea
-                </Button>
+                <IdeaSubmissionForm onIdeaSubmitted={refetchIdeas} />
                 <Button variant="outline" className="w-full justify-start gap-2">
                   <FileText className="h-4 w-4" />
                   Browse All Ideas
