@@ -141,6 +141,12 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
     setIsSubmitting(true);
 
     try {
+      console.log('🔍 Starting action:', actionType, 'for idea:', idea.id, 'current stage:', idea.stage);
+      
+      // Get current user for debugging
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 Current user:', user?.id, user?.email);
+      
       // Get next stage using the database function
       const { data: nextStageData, error: stageError } = await supabase
         .rpc('get_next_stage', {
@@ -149,18 +155,25 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
         });
 
       if (stageError) {
+        console.error('❌ Stage error:', stageError);
         throw stageError;
       }
 
+      console.log('📈 Next stage will be:', nextStageData);
+
       // Update the idea stage
+      console.log('🔄 Attempting to update idea stage...');
       const { error: updateError } = await supabase
         .from('ideas')
         .update({ stage: nextStageData })
         .eq('id', idea.id);
 
       if (updateError) {
+        console.error('❌ Update error:', updateError);
         throw updateError;
       }
+
+      console.log('✅ Idea stage updated successfully');
 
       // Add status update record
       const { error: statusError } = await supabase
