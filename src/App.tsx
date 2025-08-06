@@ -15,16 +15,16 @@ const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const { user } = useAuth();
-  const isAdmin = user?.email === 'admin@ideas2it.com';
-  const isEmployee = user && user.email !== 'admin@ideas2it.com';
+  const isSuperAdmin = user?.email === 'arif@ideas2it.com';
+  const isEmployee = user && user.email !== 'arif@ideas2it.com';
 
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
       <Route path="/ideator" element={isEmployee ? <IdeatorDashboard /> : <Auth />} />
-      <Route path="/admin" element={isAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
+      <Route path="/admin" element={isSuperAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
       <Route path="/" element={
-        isAdmin ? <Navigate to="/admin" /> : 
+        isSuperAdmin ? <Navigate to="/admin" /> : 
         isEmployee ? <Navigate to="/ideator" /> : 
         <Index />
       } />
