@@ -10,14 +10,15 @@ import {
   Rocket,
   Calendar,
   MessageSquare,
-  TrendingUp
+  TrendingUp,
+  XCircle
 } from 'lucide-react';
 
 interface Idea {
   id: string;
   title: string;
   description: string;
-  stage: 'discovery' | 'basic_validation' | 'tech_validation' | 'leadership_pitch' | 'mvp';
+  stage: 'discovery' | 'basic_validation' | 'tech_validation' | 'leadership_pitch' | 'mvp' | 'rejected';
   created_at: string;
   category: string;
   tags: string[];
@@ -57,6 +58,12 @@ const stageConfig = {
     icon: Rocket,
     color: 'bg-green-500',
     description: 'Minimum viable product development'
+  },
+  rejected: {
+    label: 'Rejected',
+    icon: XCircle,
+    color: 'bg-red-500',
+    description: 'Idea has been rejected'
   }
 };
 
@@ -93,7 +100,7 @@ export const IdeaFunnelView = ({ ideas }: IdeaFunnelViewProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {Object.entries(stageConfig).map(([stage, config]) => {
               const stageIdeas = getIdeasByStage(stage as keyof typeof stageConfig);
               const progress = getStageProgress(stage as keyof typeof stageConfig);
@@ -119,7 +126,7 @@ export const IdeaFunnelView = ({ ideas }: IdeaFunnelViewProps) => {
 
       {/* Staged Tabs */}
       <Tabs defaultValue="discovery" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           {Object.entries(stageConfig).map(([stage, config]) => {
             const count = getIdeasByStage(stage as keyof typeof stageConfig).length;
             return (

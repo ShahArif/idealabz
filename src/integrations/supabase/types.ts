@@ -214,6 +214,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_stage: {
+        Args: {
+          _user_id: string
+          _stage: Database["public"]["Enums"]["idea_stage"]
+        }
+        Returns: boolean
+      }
+      get_next_stage: {
+        Args: {
+          _current_stage: Database["public"]["Enums"]["idea_stage"]
+          _action: string
+        }
+        Returns: Database["public"]["Enums"]["idea_stage"]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

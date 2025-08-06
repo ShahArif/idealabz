@@ -17,9 +17,11 @@ type IdeaSubmissionData = z.infer<typeof ideaSubmissionSchema>;
 
 interface IdeaSubmissionFormProps {
   onIdeaSubmitted?: () => void;
+  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
-export const IdeaSubmissionForm = ({ onIdeaSubmitted }: IdeaSubmissionFormProps) => {
+export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: IdeaSubmissionFormProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -81,6 +83,8 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted }: IdeaSubmissionFormProps)
       form.reset();
       setIsOpen(false);
       onIdeaSubmitted?.();
+      onClose?.();
+      onSuccess?.();
     } catch (error) {
       console.error("Error submitting idea:", error);
       toast({
