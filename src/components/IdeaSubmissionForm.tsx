@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ideaSubmissionSchema } from "@/lib/validations";
-import { Lightbulb, Plus } from "lucide-react";
+import { Lightbulb, Plus, Upload, X, FileText } from "lucide-react";
 
 type IdeaSubmissionData = z.infer<typeof ideaSubmissionSchema>;
 
@@ -24,6 +24,7 @@ interface IdeaSubmissionFormProps {
 export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: IdeaSubmissionFormProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const { toast } = useToast();
 
   const form = useForm<IdeaSubmissionData>({
@@ -39,6 +40,75 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
     },
   });
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    
+    // Validate file count
+    if (uploadedFiles.length + files.length > 3) {
+      toast({
+        title: "Too many files",
+        description: "Maximum 3 documents allowed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate each file
+    const validFiles = files.filter(file => {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast({
+          title: "File too large",
+          description: `${file.name} is larger than 10MB.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not a supported file type. Only PDF, JPEG, PNG, and GIF files are allowed.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      return true;
+    });
+
+    setUploadedFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadFile = async (file: File, ideaId: string): Promise<string | null> => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${ideaId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('idea-documents')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        return null;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('idea-documents')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+  };
+
   const onSubmit = async (data: IdeaSubmissionData) => {
     try {
       setIsSubmitting(true);
@@ -53,7 +123,8 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
         return;
       }
 
-      const { error } = await supabase.from("ideas").insert({
+      // Insert the idea first
+      const { data: ideaData, error: ideaError } = await supabase.from("ideas").insert({
         title: data.title,
         description: data.description,
         problem_statement: data.problem_statement,
@@ -63,10 +134,10 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
         category: data.category,
         submitted_by: user.id,
         stage: 'discovery',
-      });
+      }).select().single();
 
-      if (error) {
-        console.error("Error submitting idea:", error);
+      if (ideaError) {
+        console.error("Error submitting idea:", ideaError);
         toast({
           title: "Error",
           description: "Failed to submit idea. Please try again.",
@@ -75,12 +146,44 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
         return;
       }
 
+      // Upload documents if any
+      if (uploadedFiles.length > 0) {
+        const attachmentPromises = uploadedFiles.map(async (file) => {
+          const fileUrl = await uploadFile(file, ideaData.id);
+          if (fileUrl) {
+            return {
+              idea_id: ideaData.id,
+              file_name: file.name,
+              file_url: fileUrl,
+              file_size: file.size,
+              file_type: file.type,
+              uploaded_by: user.id,
+            };
+          }
+          return null;
+        });
+
+        const attachments = (await Promise.all(attachmentPromises)).filter(Boolean);
+        
+        if (attachments.length > 0) {
+          const { error: attachmentError } = await supabase
+            .from('attachments')
+            .insert(attachments);
+
+          if (attachmentError) {
+            console.error("Error saving attachments:", attachmentError);
+            // Don't fail the entire submission if attachments fail
+          }
+        }
+      }
+
       toast({
         title: "Success!",
         description: "Your idea has been submitted successfully.",
       });
 
       form.reset();
+      setUploadedFiles([]);
       setIsOpen(false);
       onIdeaSubmitted?.();
       onClose?.();
@@ -208,22 +311,81 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="prd_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>PRD URL (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Document Upload Section */}
+            <div className="space-y-4">
+              <div>
+                <FormLabel>Supporting Documents (Optional)</FormLabel>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Upload up to 3 documents like PRD, product pitch, or other supporting materials.
+                  <br />
+                  <strong>Supported formats:</strong> PDF, JPEG, PNG, GIF (Max 10MB each)
+                </p>
+                
+                <div className="space-y-3">
+                  {/* File Upload Input */}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.gif"
+                      multiple
+                      onChange={handleFileUpload}
+                      disabled={uploadedFiles.length >= 3}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.querySelector('input[type="file"]')?.click()}
+                      disabled={uploadedFiles.length >= 3}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Browse
+                    </Button>
+                  </div>
 
-            <div className="flex justify-end gap-3">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                  {/* File List */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Selected Files ({uploadedFiles.length}/3):</p>
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 border rounded-md bg-muted/50">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium">{file.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsOpen(false);
+                  form.reset();
+                  setUploadedFiles([]);
+                }}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>

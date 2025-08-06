@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserRole, UserRole } from '@/hooks/useUserRole';
+import { useUserRole, useRoles } from '@/hooks/useUserRole';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,12 +27,13 @@ interface UserProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  role: UserRole;
+  role: string; // Changed from UserRole to string
   created_at: string;
 }
 
 export const UserManagement = () => {
   const { role: currentUserRole, getRoleDisplayName } = useUserRole();
+  const { roles: availableRoles, loading: rolesLoading } = useRoles();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,10 +45,8 @@ export const UserManagement = () => {
     password: '',
     firstName: '',
     lastName: '',
-    role: 'employee' as UserRole
+    role: ''
   });
-
-  const roles: UserRole[] = ['employee', 'product_expert', 'tech_expert', 'leader', 'super_admin', 'idealabs_core_team', 'idea_mentor'];
 
   const fetchUsers = async () => {
     try {
@@ -121,7 +120,7 @@ export const UserManagement = () => {
         if (newUser.role !== 'employee') {
           const { error: roleError } = await supabase
             .from('profiles')
-            .update({ role: newUser.role })
+            .update({ role: newUser.role as any })
             .eq('id', data.user.id);
 
           if (roleError) {
@@ -139,7 +138,7 @@ export const UserManagement = () => {
           password: '',
           firstName: '',
           lastName: '',
-          role: 'employee'
+          role: ''
         });
         setIsAddDialogOpen(false);
         fetchUsers();
@@ -163,7 +162,7 @@ export const UserManagement = () => {
         .update({
           first_name: selectedUser.first_name,
           last_name: selectedUser.last_name,
-          role: selectedUser.role
+          role: selectedUser.role as any
         })
         .eq('id', selectedUser.id);
 
@@ -255,6 +254,18 @@ export const UserManagement = () => {
     );
   }
 
+  // Show loading state while roles are being fetched
+  if (rolesLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading roles...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -334,12 +345,12 @@ export const UserManagement = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value as UserRole })}>
+                <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {roles.map((role) => (
+                    {availableRoles.map((role) => (
                       <SelectItem key={role} value={role}>
                         {getRoleDisplayName(role)}
                       </SelectItem>
@@ -475,13 +486,13 @@ export const UserManagement = () => {
                                     <Label htmlFor="editRole">Role</Label>
                                     <Select 
                                       value={selectedUser.role} 
-                                      onValueChange={(value) => setSelectedUser({ ...selectedUser, role: value as UserRole })}
+                                      onValueChange={(value) => setSelectedUser({ ...selectedUser, role: value })}
                                     >
                                       <SelectTrigger>
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        {roles.map((role) => (
+                                        {availableRoles.map((role) => (
                                           <SelectItem key={role} value={role}>
                                             {getRoleDisplayName(role)}
                                           </SelectItem>

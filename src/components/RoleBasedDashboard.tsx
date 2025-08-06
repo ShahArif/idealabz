@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useUserRole, useRoles } from '@/hooks/useUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,7 @@ interface Idea {
 export const RoleBasedDashboard = () => {
   const { user, signOut } = useAuth();
   const { role, loading: roleLoading, getRoleDisplayName } = useUserRole();
+  const { roles: availableRoles } = useRoles();
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStage, setSelectedStage] = useState<string>('all');
@@ -77,19 +78,12 @@ export const RoleBasedDashboard = () => {
 
   const getManageableIdeas = () => {
     if (!role) return [];
-    
-    switch (role) {
-      case 'product_expert':
-        return ideas.filter(idea => ['discovery', 'basic_validation'].includes(idea.stage));
-      case 'tech_expert':
-        return ideas.filter(idea => idea.stage === 'tech_validation');
-      case 'leader':
-        return ideas.filter(idea => ['leadership_pitch', 'mvp'].includes(idea.stage));
-      case 'super_admin':
-        return ideas;
-      default:
-        return [];
-    }
+    // Use availableRoles for dynamic checks
+    if (role === 'super_admin' && availableRoles.includes('super_admin')) return ideas;
+    if (role === 'product_expert' && availableRoles.includes('product_expert')) return ideas.filter(idea => ['discovery', 'basic_validation'].includes(idea.stage));
+    if (role === 'tech_expert' && availableRoles.includes('tech_expert')) return ideas.filter(idea => idea.stage === 'tech_validation');
+    if (role === 'leader' && availableRoles.includes('leader')) return ideas.filter(idea => ['leadership_pitch', 'mvp'].includes(idea.stage));
+    return [];
   };
 
   const getStageStats = () => {
@@ -134,7 +128,7 @@ export const RoleBasedDashboard = () => {
             <div className="flex items-center gap-4">
               <Badge variant="secondary" className="gap-2">
                 <Users className="h-3 w-3" />
-                {role ? getRoleDisplayName(role) : 'Loading...'}
+                {roleLoading ? 'Loading...' : (role ? getRoleDisplayName(role) : 'No Role')}
               </Badge>
               <Button variant="outline" size="sm" onClick={signOut} className="gap-2">
                 <LogOut className="h-4 w-4" />

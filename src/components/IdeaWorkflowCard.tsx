@@ -35,6 +35,39 @@ interface Idea {
   submitted_by: string;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  user_email?: string;
+  user_role?: string;
+}
+
+interface StatusUpdate {
+  id: string;
+  action: string;
+  comment: string | null;
+  created_at: string;
+  previous_stage: string;
+  new_stage: string;
+  updated_by: string;
+  updated_by_email?: string;
+  updated_by_role?: string;
+}
+
+interface Attachment {
+  id: string;
+  file_name: string;
+  file_url: string;
+  file_size: number;
+  file_type: string;
+  uploaded_by: string;
+  created_at: string;
+  uploaded_by_email?: string;
+  uploaded_by_role?: string;
+}
+
 interface IdeaWorkflowCardProps {
   idea: Idea;
   onUpdate?: () => void;
@@ -82,9 +115,14 @@ const stageConfig = {
 export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
   const { canManageStage } = useUserRole();
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<string>('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [statusUpdates, setStatusUpdates] = useState<StatusUpdate[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const { toast } = useToast();
 
   const formatDate = (dateString: string) => {
@@ -97,6 +135,123 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
 
   const config = stageConfig[idea.stage];
   const IconComponent = config.icon;
+
+  // Fetch idea details (comments and status updates)
+  const fetchIdeaDetails = async () => {
+    setLoadingDetails(true);
+    try {
+      // Fetch comments
+      const { data: commentsData, error: commentsError } = await supabase
+        .from('comments')
+        .select('id, content, created_at, user_id')
+        .eq('idea_id', idea.id)
+        .order('created_at', { ascending: false });
+
+      if (commentsError) {
+        console.error('Error fetching comments:', commentsError);
+      } else {
+        // Fetch user details for comments
+        const commentsWithUsers = await Promise.all(
+          (commentsData || []).map(async (comment) => {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email, role')
+              .eq('id', comment.user_id)
+              .single();
+            
+            return {
+              id: comment.id,
+              content: comment.content,
+              created_at: comment.created_at,
+              user_id: comment.user_id,
+              user_email: (userData as any)?.email || 'Unknown',
+              user_role: (userData as any)?.role || 'Unknown'
+            };
+          })
+        );
+        setComments(commentsWithUsers);
+      }
+
+      // Fetch status updates
+      const { data: statusData, error: statusError } = await supabase
+        .from('status_updates')
+        .select('id, action, comment, created_at, previous_stage, new_stage, updated_by')
+        .eq('idea_id', idea.id)
+        .order('created_at', { ascending: false });
+
+      if (statusError) {
+        console.error('Error fetching status updates:', statusError);
+      } else {
+        // Fetch user details for status updates
+        const statusWithUsers = await Promise.all(
+          (statusData || []).map(async (status) => {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email, role')
+              .eq('id', status.updated_by)
+              .single();
+            
+            return {
+              id: status.id,
+              action: status.action,
+              comment: status.comment,
+              created_at: status.created_at,
+              previous_stage: status.previous_stage,
+              new_stage: status.new_stage,
+              updated_by: status.updated_by,
+              updated_by_email: (userData as any)?.email || 'Unknown',
+              updated_by_role: (userData as any)?.role || 'Unknown'
+            };
+          })
+        );
+        setStatusUpdates(statusWithUsers);
+      }
+
+      // Fetch attachments
+      const { data: attachmentsData, error: attachmentsError } = await supabase
+        .from('attachments')
+        .select('id, file_name, file_url, file_size, file_type, uploaded_by, created_at')
+        .eq('idea_id', idea.id)
+        .order('created_at', { ascending: false });
+
+      if (attachmentsError) {
+        console.error('Error fetching attachments:', attachmentsError);
+      } else {
+        const attachmentsWithUsers = await Promise.all(
+          (attachmentsData || []).map(async (attachment) => {
+            const { data: userData } = await supabase
+              .from('profiles')
+              .select('email, role')
+              .eq('id', attachment.uploaded_by)
+              .single();
+            
+            return {
+              id: attachment.id,
+              file_name: attachment.file_name,
+              file_url: attachment.file_url,
+              file_size: attachment.file_size,
+              file_type: attachment.file_type,
+              uploaded_by: attachment.uploaded_by,
+              created_at: attachment.created_at,
+              uploaded_by_email: (userData as any)?.email || 'Unknown',
+              uploaded_by_role: (userData as any)?.role || 'Unknown'
+            };
+          })
+        );
+        setAttachments(attachmentsWithUsers);
+      }
+
+    } catch (error) {
+      console.error('Error fetching idea details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleCardClick = () => {
+    setIsDetailDialogOpen(true);
+    fetchIdeaDetails();
+  };
 
   const getAvailableActions = () => {
     if (!canManageStage(idea.stage)) return [];
@@ -229,134 +384,289 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
   const availableActions = getAvailableActions();
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg line-clamp-2">{idea.title}</CardTitle>
-          <Badge variant="secondary" className={`${config.color} text-white ml-2`}>
-            {config.label}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <IconComponent className="h-4 w-4" />
-          <span>{config.description}</span>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            <strong>Description:</strong> {idea.description}
-          </p>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            <strong>Problem:</strong> {idea.problem_statement}
-          </p>
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            <strong>Target Audience:</strong> {idea.target_audience}
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            {formatDate(idea.created_at)}
+    <>
+      <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleCardClick}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <CardTitle className="text-lg line-clamp-2">{idea.title}</CardTitle>
+            <Badge variant="secondary" className={`${config.color} text-white ml-2`}>
+              {config.label}
+            </Badge>
           </div>
-          <Badge variant="outline" className="text-xs">
-            {idea.category}
-          </Badge>
-        </div>
-
-        {idea.tags && idea.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {idea.tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {idea.tags.length > 3 && (
-              <Badge variant="secondary" className="text-xs">
-                +{idea.tags.length - 3} more
-              </Badge>
-            )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <IconComponent className="h-4 w-4" />
+            <span>{config.description}</span>
           </div>
-        )}
 
-        {availableActions.length > 0 && (
-          <div className="pt-3 border-t">
-            <div className="flex flex-wrap gap-2">
-              {availableActions.map((action) => (
-                <Dialog key={action.type} open={isActionDialogOpen && actionType === action.type} onOpenChange={(open) => {
-                  setIsActionDialogOpen(open);
-                  if (!open) {
-                    setActionType('');
-                    setComment('');
-                  }
-                }}>
-                  <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant={action.variant}
-                      onClick={() => {
-                        setActionType(action.type);
-                        setIsActionDialogOpen(true);
-                      }}
-                      className="gap-1"
-                    >
-                      {action.type === 'accept' || action.type === 'approve' ? (
-                        <CheckCircle className="h-3 w-3" />
-                      ) : action.type === 'reject' ? (
-                        <XCircle className="h-3 w-3" />
-                      ) : (
-                        <ArrowRight className="h-3 w-3" />
-                      )}
-                      {action.label}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{action.label}</DialogTitle>
-                      <DialogDescription>
-                        Please provide a comment explaining your decision for "{idea.title}".
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="comment">Comment *</Label>
-                        <Textarea
-                          id="comment"
-                          placeholder="Explain your decision..."
-                          value={comment}
-                          onChange={(e) => setComment(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              <strong>Description:</strong> {idea.description}
+            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              <strong>Problem:</strong> {idea.problem_statement}
+            </p>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              <strong>Target Audience:</strong> {idea.target_audience}
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formatDate(idea.created_at)}
+            </div>
+            <Badge variant="outline" className="text-xs">
+              {idea.category}
+            </Badge>
+          </div>
+
+          {idea.tags && idea.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {idea.tags.slice(0, 3).map((tag, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {idea.tags.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{idea.tags.length - 3} more
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {availableActions.length > 0 && (
+            <div className="pt-3 border-t" onClick={(e) => e.stopPropagation()}>
+              <div className="flex flex-wrap gap-2">
+                {availableActions.map((action) => (
+                  <Dialog key={action.type} open={isActionDialogOpen && actionType === action.type} onOpenChange={(open) => {
+                    setIsActionDialogOpen(open);
+                    if (!open) {
+                      setActionType('');
+                      setComment('');
+                    }
+                  }}>
+                    <DialogTrigger asChild>
                       <Button
-                        variant="outline"
+                        size="sm"
+                        variant={action.variant}
                         onClick={() => {
-                          setIsActionDialogOpen(false);
-                          setComment('');
-                          setActionType('');
+                          setActionType(action.type);
+                          setIsActionDialogOpen(true);
                         }}
                       >
-                        Cancel
+                        {action.label}
                       </Button>
-                      <Button 
-                        onClick={handleAction}
-                        disabled={isSubmitting || !comment.trim()}
-                        variant={action.variant}
-                      >
-                        {isSubmitting ? 'Processing...' : action.label}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ))}
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{action.label}</DialogTitle>
+                        <DialogDescription>
+                          Please provide a comment for your action.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="comment">Comment</Label>
+                          <Textarea
+                            id="comment"
+                            placeholder="Enter your comment..."
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            rows={4}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsActionDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleAction} disabled={isSubmitting}>
+                          {isSubmitting ? 'Processing...' : action.label}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Detailed View Modal */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{idea.title}</DialogTitle>
+            <DialogDescription>
+              Full details, comments, and status updates for this idea
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Idea Details */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className={`${config.color} text-white`}>
+                  {config.label}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Created on {formatDate(idea.created_at)}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Description</h4>
+                  <p className="text-sm text-muted-foreground">{idea.description}</p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Problem Statement</h4>
+                  <p className="text-sm text-muted-foreground">{idea.problem_statement}</p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Target Audience</h4>
+                  <p className="text-sm text-muted-foreground">{idea.target_audience}</p>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Category</h4>
+                  <p className="text-sm text-muted-foreground">{idea.category}</p>
+                </div>
+              </div>
+
+              {idea.tags && idea.tags.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold">Tags</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {idea.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Status Updates */}
+            <div className="space-y-4">
+              <h4 className="font-semibold flex items-center gap-2">
+                <ArrowRight className="h-4 w-4" />
+                Status Updates
+              </h4>
+              {loadingDetails ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Loading status updates...</p>
+                </div>
+              ) : statusUpdates.length > 0 ? (
+                <div className="space-y-3">
+                  {statusUpdates.map((update) => (
+                    <div key={update.id} className="border rounded-lg p-3 bg-muted/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {update.action}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {update.previous_stage} → {update.new_stage}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(update.created_at)}
+                        </span>
+                      </div>
+                      {update.comment && (
+                        <p className="text-sm text-muted-foreground">{update.comment}</p>
+                      )}
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        by {update.updated_by_email} ({update.updated_by_role})
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No status updates yet.</p>
+              )}
+            </div>
+
+            {/* Comments */}
+            <div className="space-y-4">
+              <h4 className="font-semibold flex items-center gap-2">
+                <MessageCircle className="h-4 w-4" />
+                Comments
+              </h4>
+              {loadingDetails ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Loading comments...</p>
+                </div>
+              ) : comments.length > 0 ? (
+                <div className="space-y-3">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{comment.user_email}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {comment.user_role}
+                          </Badge>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(comment.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{comment.content}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No comments yet.</p>
+              )}
+            </div>
+
+            {/* Attachments */}
+            <div className="space-y-4">
+              <h4 className="font-semibold flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Attachments
+              </h4>
+              {loadingDetails ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Loading attachments...</p>
+                </div>
+              ) : attachments.length > 0 ? (
+                <div className="space-y-3">
+                  {attachments.map((attachment) => (
+                    <div key={attachment.id} className="border rounded-lg p-3 bg-muted/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <a href={attachment.file_url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:underline">
+                          {attachment.file_name}
+                        </a>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(attachment.created_at)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Size: {attachment.file_size} bytes, Type: {attachment.file_type}
+                      </p>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Uploaded by {(attachment as any).uploaded_by_email || 'Unknown'} ({(attachment as any).uploaded_by_role || 'Unknown'})
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No attachments yet.</p>
+              )}
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

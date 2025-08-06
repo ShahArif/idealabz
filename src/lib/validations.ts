@@ -66,6 +66,10 @@ export const ideaSubmissionSchema = z.object({
   category: z.enum(["technology", "process", "product", "service", "other"], {
     message: "Please select a category",
   }),
+  documents: z
+    .array(z.instanceof(File))
+    .max(3, "Maximum 3 documents allowed")
+    .optional(),
 });
 
 // Comment validation schema
