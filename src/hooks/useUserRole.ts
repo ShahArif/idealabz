@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
-export type UserRole = 'employee' | 'product_expert' | 'tech_expert' | 'leader' | 'super_admin' | 'idealabs_core_team';
+export type UserRole = 'employee' | 'product_expert' | 'tech_expert' | 'leader' | 'super_admin' | 'idealabs_core_team' | 'idea_mentor';
 
 export const useUserRole = () => {
   const { user } = useAuth();
@@ -73,6 +73,8 @@ export const useUserRole = () => {
         return 'Super Admin';
       case 'idealabs_core_team':
         return 'IdeaLabs Core Team';
+      case 'idea_mentor':
+        return 'Idea Mentor';
       default:
         return 'Unknown';
     }

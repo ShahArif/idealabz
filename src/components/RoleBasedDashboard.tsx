@@ -16,8 +16,10 @@ import {
   Plus,
   Filter,
   Search,
-  BarChart3
+  BarChart3,
+  Settings
 } from 'lucide-react';
+import { UserManagement } from './UserManagement';
 
 interface Idea {
   id: string;
@@ -186,13 +188,19 @@ export const RoleBasedDashboard = () => {
 
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             {role === 'employee' && <TabsTrigger value="my-ideas">My Ideas ({myIdeas.length})</TabsTrigger>}
             {manageableIdeas.length > 0 && (
               <TabsTrigger value="manage">Manage ({manageableIdeas.length})</TabsTrigger>
             )}
             <TabsTrigger value="all-ideas">All Ideas ({ideas.length})</TabsTrigger>
+            {role === 'super_admin' && (
+              <TabsTrigger value="user-management" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Users
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -341,6 +349,12 @@ export const RoleBasedDashboard = () => {
               </Card>
             )}
           </TabsContent>
+
+          {role === 'super_admin' && (
+            <TabsContent value="user-management">
+              <UserManagement />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
