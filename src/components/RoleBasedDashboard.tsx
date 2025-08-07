@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IdeaWorkflowCard } from './IdeaWorkflowCard';
 import { IdeaSubmissionForm } from './IdeaSubmissionForm';
+import { Navigation } from './Navigation';
 import { 
   Users, 
   Lightbulb, 
@@ -20,6 +21,11 @@ import {
   Settings
 } from 'lucide-react';
 import { UserManagement } from './UserManagement';
+import NotificationBell from './NotificationBell';
+import { Dialog } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Funnel } from 'funnel-react';
 
 interface Idea {
   id: string;
@@ -42,6 +48,27 @@ export const RoleBasedDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStage, setSelectedStage] = useState<string>('all');
   const [showSubmissionForm, setShowSubmissionForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStage, setFilterStage] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+
+  const stageOptions = [
+    { value: 'all', label: 'All Stages' },
+    { value: 'discovery', label: 'Discovery' },
+    { value: 'basic_validation', label: 'Basic Validation' },
+    { value: 'tech_validation', label: 'Tech Validation' },
+    { value: 'leadership_pitch', label: 'Leadership Pitch' },
+    { value: 'mvp', label: 'MVP' },
+    { value: 'rejected', label: 'Rejected' },
+  ];
+  const categoryOptions = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'technology', label: 'Technology' },
+    { value: 'process', label: 'Process' },
+    { value: 'product', label: 'Product' },
+    { value: 'service', label: 'Service' },
+    { value: 'other', label: 'Other' },
+  ];
 
   const fetchIdeas = async () => {
     try {
@@ -98,6 +125,29 @@ export const RoleBasedDashboard = () => {
     return stats;
   };
 
+  // Helper to filter ideas by search query, stage, and category
+  const filterIdeas = (ideasToFilter: Idea[]) => {
+    let filtered = ideasToFilter;
+    if (filterStage !== 'all') {
+      filtered = filtered.filter(idea => idea.stage === filterStage);
+    }
+    if (filterCategory !== 'all') {
+      filtered = filtered.filter(idea => idea.category === filterCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(idea =>
+        idea.title.toLowerCase().includes(q) ||
+        idea.description.toLowerCase().includes(q) ||
+        idea.problem_statement.toLowerCase().includes(q) ||
+        idea.target_audience.toLowerCase().includes(q) ||
+        (idea.category && idea.category.toLowerCase().includes(q)) ||
+        (Array.isArray(idea.tags) && idea.tags.some(tag => tag.toLowerCase().includes(q)))
+      );
+    }
+    return filtered;
+  };
+
   if (roleLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -113,8 +163,18 @@ export const RoleBasedDashboard = () => {
   const manageableIdeas = getManageableIdeas();
   const myIdeas = getMyIdeas();
 
+  const funnelData = [
+    { label: 'Discovery', quantity: stats.discovery },
+    { label: 'Basic Validation', quantity: stats.basic_validation },
+    { label: 'Tech Validation', quantity: stats.tech_validation },
+    { label: 'Leadership Pitch', quantity: stats.leadership_pitch },
+    { label: 'MVP', quantity: stats.mvp },
+    { label: 'Rejected', quantity: stats.rejected },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
       {/* Header */}
       <div className="bg-card border-b border-border">
         <div className="container mx-auto px-6 py-4">
@@ -130,6 +190,7 @@ export const RoleBasedDashboard = () => {
                 <Users className="h-3 w-3" />
                 {roleLoading ? 'Loading...' : (role ? getRoleDisplayName(role) : 'No Role')}
               </Badge>
+              <NotificationBell />
               <Button variant="outline" size="sm" onClick={signOut} className="gap-2">
                 <LogOut className="h-4 w-4" />
                 Sign Out
@@ -210,23 +271,21 @@ export const RoleBasedDashboard = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Discovery → Basic Validation</span>
-                      <span className="text-sm text-muted-foreground">{stats.discovery} ideas</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Basic → Tech Validation</span>
-                      <span className="text-sm text-muted-foreground">{stats.basic_validation} ideas</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Tech → Leadership Pitch</span>
-                      <span className="text-sm text-muted-foreground">{stats.tech_validation} ideas</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Leadership → MVP</span>
-                      <span className="text-sm text-muted-foreground">{stats.leadership_pitch} ideas</span>
-                    </div>
+                  <div className="w-full flex flex-col items-center">
+                    <Funnel
+                      data={funnelData}
+                      width={600}
+                      height={320}
+                      valueKey="quantity"
+                      labelKey="label"
+                      colors={{
+                        graph: ["#3b82f6", "#f59e42", "#fbbf24", "#a78bfa", "#10b981", "#ef4444"],
+                        percent: '#333',
+                        label: '#222',
+                        value: '#222',
+                      }}
+                      displayPercent={true}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -263,21 +322,50 @@ export const RoleBasedDashboard = () => {
 
           {role === 'employee' && (
             <TabsContent value="my-ideas" className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-lg font-semibold">My Submitted Ideas</h3>
-                <Button onClick={() => setShowSubmissionForm(true)} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Submit New Idea
-                </Button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Select value={filterStage} onValueChange={setFilterStage}>
+                    <SelectTrigger className="max-w-xs w-[140px]">
+                      <SelectValue placeholder="Stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stageOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger className="max-w-xs w-[140px]">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="text"
+                    placeholder="Search ideas..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <Button onClick={() => setShowSubmissionForm(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Submit New Idea
+                  </Button>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myIdeas.map((idea) => (
+                {filterIdeas(myIdeas).map((idea) => (
                   <IdeaWorkflowCard key={idea.id} idea={idea} onUpdate={fetchIdeas} />
                 ))}
               </div>
 
-              {myIdeas.length === 0 && (
+              {filterIdeas(myIdeas).length === 0 && (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
@@ -297,13 +385,42 @@ export const RoleBasedDashboard = () => {
 
           {manageableIdeas.length > 0 && (
             <TabsContent value="manage" className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <h3 className="text-lg font-semibold">Ideas Requiring Your Action</h3>
-                <Badge variant="outline">{manageableIdeas.length} pending</Badge>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Select value={filterStage} onValueChange={setFilterStage}>
+                    <SelectTrigger className="max-w-xs w-[140px]">
+                      <SelectValue placeholder="Stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stageOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger className="max-w-xs w-[140px]">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="text"
+                    placeholder="Search ideas..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="max-w-xs"
+                  />
+                  <Badge variant="outline">{manageableIdeas.length} pending</Badge>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {manageableIdeas.map((idea) => (
+                {filterIdeas(manageableIdeas).map((idea) => (
                   <IdeaWorkflowCard key={idea.id} idea={idea} onUpdate={fetchIdeas} />
                 ))}
               </div>
@@ -311,27 +428,46 @@ export const RoleBasedDashboard = () => {
           )}
 
           <TabsContent value="all-ideas" className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h3 className="text-lg font-semibold">All Ideas</h3>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={filterStage} onValueChange={setFilterStage}>
+                  <SelectTrigger className="max-w-xs w-[140px]">
+                    <SelectValue placeholder="Stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stageOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="max-w-xs w-[140px]">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryOptions.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="text"
+                  placeholder="Search ideas..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="max-w-xs"
+                />
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ideas.map((idea) => (
+              {filterIdeas(ideas).map((idea) => (
                 <IdeaWorkflowCard key={idea.id} idea={idea} onUpdate={fetchIdeas} />
               ))}
             </div>
 
-            {ideas.length === 0 && (
+            {filterIdeas(ideas).length === 0 && (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
@@ -353,13 +489,9 @@ export const RoleBasedDashboard = () => {
       </div>
 
       {/* Idea Submission Dialog */}
-      {showSubmissionForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
-            <IdeaSubmissionForm onClose={() => setShowSubmissionForm(false)} onSuccess={fetchIdeas} />
-          </div>
-        </div>
-      )}
+      <Dialog open={showSubmissionForm} onOpenChange={setShowSubmissionForm}>
+        <IdeaSubmissionForm isOpen={showSubmissionForm} setIsOpen={setShowSubmissionForm} onClose={() => setShowSubmissionForm(false)} onSuccess={fetchIdeas} />
+      </Dialog>
     </div>
   );
 };

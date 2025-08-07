@@ -260,22 +260,25 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
       case 'discovery':
         return [
           { type: 'accept', label: 'Accept for Basic Validation', variant: 'default' as const },
+          { type: 'request_more_info', label: 'Need Info', variant: 'outline' as const },
           { type: 'reject', label: 'Reject', variant: 'destructive' as const }
         ];
       case 'basic_validation':
         return [
           { type: 'accept', label: 'Accept for Tech Validation', variant: 'default' as const },
+          { type: 'request_more_info', label: 'Need Info', variant: 'outline' as const },
           { type: 'reject', label: 'Reject', variant: 'destructive' as const }
         ];
       case 'tech_validation':
         return [
           { type: 'accept', label: 'Accept for Leadership Pitch', variant: 'default' as const },
+          { type: 'request_more_info', label: 'Need Info', variant: 'outline' as const },
           { type: 'reject', label: 'Reject', variant: 'destructive' as const }
         ];
       case 'leadership_pitch':
         return [
           { type: 'approve', label: 'Approve for MVP', variant: 'default' as const },
-          { type: 'request_more_info', label: 'Request More Info', variant: 'outline' as const },
+          { type: 'request_more_info', label: 'Need Info', variant: 'outline' as const },
           { type: 'reject', label: 'Reject', variant: 'destructive' as const }
         ];
       default:
@@ -284,6 +287,97 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
   };
 
   const handleAction = async () => {
+    if (actionType === 'add_comment') {
+      if (!comment.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a comment.",
+          variant: "destructive"
+        });
+        return;
+      }
+      setIsSubmitting(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        // Insert comment
+        await supabase.from('comments').insert({
+          idea_id: idea.id,
+          content: comment,
+          is_internal: true,
+          user_id: user?.id
+        });
+
+        // Fetch idea details and relevant users
+        const { data: ideaDetails } = await supabase
+          .from('ideas')
+          .select('id, title, submitted_by, stage')
+          .eq('id', idea.id)
+          .single();
+        const { data: productExperts } = await supabase.from('profiles').select('id').eq('role', 'product_expert');
+        const { data: techExperts } = await supabase.from('profiles').select('id').eq('role', 'tech_expert');
+
+        // Helper: create notification
+        const createNotification = async (userId, type, message) => {
+          await supabase.from('notifications').insert({
+            user_id: userId,
+            idea_id: idea.id,
+            type,
+            message,
+            link: `/ideas/${idea.id}`,
+            read: false,
+            metadata: { action: 'add_comment', comment }
+          });
+        };
+
+        // Notify idea owner
+        if (ideaDetails?.submitted_by) {
+          await createNotification(
+            ideaDetails.submitted_by,
+            'comment_added',
+            `A manager commented on your idea "${idea.title}".`
+          );
+        }
+        // Notify all product experts
+        if (productExperts) {
+          for (const pe of productExperts) {
+            await createNotification(
+              pe.id,
+              'comment_added',
+              `A manager commented on the idea "${idea.title}".`
+            );
+          }
+        }
+        // Notify all tech experts
+        if (techExperts) {
+          for (const te of techExperts) {
+            await createNotification(
+              te.id,
+              'comment_added',
+              `A manager commented on the idea "${idea.title}".`
+            );
+          }
+        }
+
+        toast({
+          title: "Comment added",
+          description: "Your comment has been added and relevant users notified."
+        });
+        setIsActionDialogOpen(false);
+        setComment('');
+        setActionType('');
+        onUpdate?.();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to add comment.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     if (!actionType || !comment.trim()) {
       toast({
         title: "Error",
@@ -370,6 +464,115 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
       setActionType('');
       onUpdate?.();
 
+      // Add notification logic after updating idea stage and status
+      // 1. Notify ideator when product expert takes action (accept/reject/comment)
+      // 2. Notify tech expert when idea moves to Tech Validation
+      // 3. Notify ideator and product expert when tech expert takes action
+      // 4. When tech expert approves, notify leader and ideator
+
+      // Fetch idea details (for submitted_by)
+      const { data: ideaDetails } = await supabase
+        .from('ideas')
+        .select('id, title, submitted_by, stage')
+        .eq('id', idea.id)
+        .single();
+
+      // Fetch product expert(s)
+      const { data: productExperts } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'product_expert');
+      // Fetch tech expert(s)
+      const { data: techExperts } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'tech_expert');
+      // Fetch leader(s)
+      const { data: leaders } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'leader');
+
+      // Helper: create notification
+      const createNotification = async (userId, type, message) => {
+        await supabase.from('notifications').insert({
+          user_id: userId,
+          idea_id: idea.id,
+          type,
+          message,
+          link: `/ideas/${idea.id}`,
+          read: false,
+          metadata: { action: actionType, comment },
+        });
+      };
+
+      // 1. Product expert action (discovery/basic_validation)
+      if (["discovery", "basic_validation"].includes(idea.stage)) {
+        // Notify ideator
+        if (ideaDetails?.submitted_by) {
+          await createNotification(
+            ideaDetails.submitted_by,
+            'product_expert_action',
+            `A product expert has ${actionType}ed your idea "${idea.title}".`
+          );
+        }
+      }
+
+      // 2. If moving to tech_validation, notify tech expert(s)
+      if (nextStageData === 'tech_validation' && techExperts) {
+        for (const te of techExperts) {
+          await createNotification(
+            te.id,
+            'tech_validation_stage',
+            `Idea "${idea.title}" has moved to Tech Validation stage.`
+          );
+        }
+      }
+
+      // 3. If tech expert takes action (on tech_validation), notify ideator and product expert(s)
+      if (idea.stage === 'tech_validation') {
+        // Notify ideator
+        if (ideaDetails?.submitted_by) {
+          await createNotification(
+            ideaDetails.submitted_by,
+            'tech_expert_action',
+            `A tech expert has ${actionType}ed your idea "${idea.title}".`
+          );
+        }
+        // Notify product expert(s)
+        if (productExperts) {
+          for (const pe of productExperts) {
+            await createNotification(
+              pe.id,
+              'tech_expert_action',
+              `A tech expert has ${actionType}ed the idea "${idea.title}" you approved.`
+            );
+          }
+        }
+      }
+
+      // 4. If tech expert approves (moves to leadership_pitch), notify leader(s) and ideator
+      if (idea.stage === 'tech_validation' && nextStageData === 'leadership_pitch') {
+        // Notify leader(s)
+        if (leaders) {
+          for (const leader of leaders) {
+            await createNotification(
+              leader.id,
+              'leadership_stage',
+              `Idea "${idea.title}" is ready for Leadership Pitch.`
+            );
+          }
+        }
+        // Notify ideator
+        if (ideaDetails?.submitted_by) {
+          await createNotification(
+            ideaDetails.submitted_by,
+            'leadership_stage',
+            `Your idea "${idea.title}" is ready for Leadership Pitch!`
+          );
+        }
+      }
+
     } catch (error: any) {
       toast({
         title: "Error",
@@ -385,7 +588,14 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
 
   return (
     <>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleCardClick}>
+      <Card
+        className="
+          hover:shadow-md transition-shadow cursor-pointer
+          w-full max-w-7xl mx-auto  // <-- changed from max-w-5xl to max-w-7xl
+          rounded-lg
+        "
+        onClick={handleCardClick}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <CardTitle className="text-lg line-clamp-2">{idea.title}</CardTitle>
@@ -394,7 +604,7 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
             </Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <IconComponent className="h-4 w-4" />
             <span>{config.description}</span>
@@ -437,64 +647,111 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
             </div>
           )}
 
-          {availableActions.length > 0 && (
-            <div className="pt-3 border-t" onClick={(e) => e.stopPropagation()}>
-              <div className="flex flex-wrap gap-2">
-                {availableActions.map((action) => (
-                  <Dialog key={action.type} open={isActionDialogOpen && actionType === action.type} onOpenChange={(open) => {
-                    setIsActionDialogOpen(open);
-                    if (!open) {
-                      setActionType('');
-                      setComment('');
-                    }
-                  }}>
-                    <DialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant={action.variant}
-                        onClick={() => {
-                          setActionType(action.type);
-                          setIsActionDialogOpen(true);
-                        }}
-                      >
-                        {action.label}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>{action.label}</DialogTitle>
-                        <DialogDescription>
-                          Please provide a comment for your action.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="comment">Comment</Label>
-                          <Textarea
-                            id="comment"
-                            placeholder="Enter your comment..."
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            rows={4}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsActionDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleAction} disabled={isSubmitting}>
-                          {isSubmitting ? 'Processing...' : action.label}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                ))}
-              </div>
+          {/* Action Buttons Row */}
+          <div className="w-full">
+            <div
+              className="
+                flex flex-col sm:flex-row flex-wrap gap-4
+                w-full
+              "
+            >
+              {availableActions.map((action) => (
+                <Button
+                  key={action.type}
+                  variant={action.variant}
+                  size="lg"
+                  className={
+                    `text-sm font-medium` +
+                    (action.label === 'Need Info'
+                      ? ' w-full sm:w-auto' // <-- Make "Need Info" button full width on mobile, auto on desktop
+                      : '')
+                  }
+                  onClick={e => {
+                    e.stopPropagation(); // Prevents card click
+                    setActionType(action.type);
+                    setIsActionDialogOpen(true);
+                  }}
+                >
+                  {action.label}
+                </Button>
+              ))}
+              {!(idea.stage === 'discovery' || idea.stage === 'basic_validation') && (
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="text-sm font-medium" // <-- removed flex-1 min-w-0 max-w-sm
+                  onClick={e => {
+                    e.stopPropagation(); // Prevents card click
+                    setActionType('add_comment');
+                    setIsActionDialogOpen(true);
+                  }}
+                >
+                  Add Comment
+                </Button>
+              )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Action Dialog */}
+      <Dialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'accept'
+                ? 'Accept Idea'
+                : actionType === 'reject'
+                ? 'Reject Idea'
+                : actionType === 'request_more_info' || actionType === 'need_info'
+                ? 'Ask for More Information'
+                : 'Action'}
+            </DialogTitle>
+          </DialogHeader>
+          {/* Show textarea for all actions except add_comment (which has its own dialog) */}
+          {actionType && actionType !== 'add_comment' && (
+            <>
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-medium">
+                  {actionType === 'accept'
+                    ? 'Why are you accepting this idea? (optional)'
+                    : actionType === 'reject'
+                    ? 'Why are you rejecting this idea? (required)'
+                    : 'What information do you need?'}
+                </label>
+                <textarea
+                  className="w-full border rounded p-2"
+                  rows={4}
+                  value={comment}
+                  onChange={e => setComment(e.target.value)}
+                  placeholder={
+                    actionType === 'accept'
+                      ? 'Add an optional comment for acceptance...'
+                      : actionType === 'reject'
+                      ? 'Please provide a reason for rejection...'
+                      : 'Describe what information you need...'
+                  }
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" onClick={() => setIsActionDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAction}
+                  disabled={isSubmitting || (actionType === 'reject' && !comment.trim())}
+                >
+                  {actionType === 'accept'
+                    ? 'Accept'
+                    : actionType === 'reject'
+                    ? 'Reject'
+                    : 'Send Request'}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Detailed View Modal */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
