@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import IdeatorDashboard from "./pages/EmployeeDashboard";
 import NotFound from "./pages/NotFound";
+import IdeaDetail from './pages/IdeaDetail';
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const AppRoutes = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/ideator" element={isEmployee ? <IdeatorDashboard /> : <Auth />} />
       <Route path="/admin" element={isSuperAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
+      <Route path="/ideas/:id" element={<IdeaDetail />} />
       <Route path="/" element={
         isSuperAdmin ? <Navigate to="/admin" /> : 
         isEmployee ? <Navigate to="/ideator" /> : 

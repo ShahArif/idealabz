@@ -8,10 +8,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { LogOut, User, Plus, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { IdeaSubmissionForm } from '@/components/IdeaSubmissionForm';
 
 
 const Index = () => {
   const { user, signOut } = useAuth();
+  const [isIdeaFormOpen, setIsIdeaFormOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,7 +31,7 @@ const Index = () => {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <Button size="sm" className="gap-2">
+              <Button size="sm" className="gap-2" onClick={() => setIsIdeaFormOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Submit Idea
               </Button>
@@ -47,8 +50,8 @@ const Index = () => {
           )}
         </div>
       </div>
-      
-      <Navigation />
+      <IdeaSubmissionForm isOpen={isIdeaFormOpen} setIsOpen={setIsIdeaFormOpen} />
+      {/* <Navigation /> */}
       <HeroSlider />
       <WhatIsIdeaLabs />
       <WhatsInItForYou />

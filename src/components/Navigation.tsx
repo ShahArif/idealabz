@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import NotificationBell from './NotificationBell';
 
 const menuItems = [
   { label: 'Home', href: '#home' },
@@ -16,6 +18,7 @@ const highlightedItem = { label: "See What's Cooking", href: '#cooking' };
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
@@ -24,6 +27,8 @@ export const Navigation = () => {
     }
     setIsOpen(false);
   };
+
+  if (user) return null;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -58,10 +63,12 @@ export const Navigation = () => {
             >
               {highlightedItem.label}
             </Button>
+            <NotificationBell />
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <NotificationBell />
             <Button
               variant="ghost"
               size="icon"

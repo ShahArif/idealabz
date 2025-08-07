@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -19,10 +19,11 @@ interface IdeaSubmissionFormProps {
   onIdeaSubmitted?: () => void;
   onClose?: () => void;
   onSuccess?: () => void;
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
 }
 
-export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: IdeaSubmissionFormProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess, isOpen, setIsOpen }: IdeaSubmissionFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const { toast } = useToast();
@@ -146,6 +147,26 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
         return;
       }
 
+      // Notify all relevant roles (product_expert, tech_expert, leader, super_admin)
+      const { data: roleUsers, error: roleUsersError } = await supabase
+        .from('profiles')
+        .select('id, role')
+        .in('role', ['product_expert', 'tech_expert', 'leader', 'super_admin']);
+      if (!roleUsersError && roleUsers) {
+        const notifications = roleUsers.map((u: any) => ({
+          user_id: u.id,
+          idea_id: ideaData.id,
+          type: 'idea_created',
+          message: `A new idea "${ideaData.title}" has been submitted!`,
+          link: `/ideas/${ideaData.id}`,
+          read: false,
+          metadata: { submitted_by: user.id },
+        }));
+        if (notifications.length > 0) {
+          await supabase.from('notifications').insert(notifications);
+        }
+      }
+
       // Upload documents if any
       if (uploadedFiles.length > 0) {
         const attachmentPromises = uploadedFiles.map(async (file) => {
@@ -202,12 +223,6 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Submit an Idea
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -215,8 +230,7 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
             Submit a New Idea
           </DialogTitle>
         </DialogHeader>
-        
-        <Form {...form}>
+        <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
@@ -393,7 +407,7 @@ export const IdeaSubmissionForm = ({ onIdeaSubmitted, onClose, onSuccess }: Idea
               </Button>
             </div>
           </form>
-        </Form>
+        </FormProvider>
       </DialogContent>
     </Dialog>
   );

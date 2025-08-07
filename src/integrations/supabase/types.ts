@@ -303,6 +303,18 @@ export type Database = {
   }
 }
 
+export interface Notification {
+  id: string;
+  user_id: string;
+  idea_id?: string;
+  type: string;
+  message: string;
+  link?: string;
+  read: boolean;
+  metadata?: any;
+  created_at: string;
+}
+
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
