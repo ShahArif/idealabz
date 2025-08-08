@@ -659,9 +659,9 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
                 <Button
                   key={action.type}
                   variant={action.variant}
-                  size="lg"
+                  size="sm"
                   className={
-                    `text-sm font-medium` +
+                    `text-sm font-small` +
                     (action.label === 'Need Info'
                       ? ' w-full sm:w-auto' // <-- Make "Need Info" button full width on mobile, auto on desktop
                       : '')
@@ -675,20 +675,7 @@ export const IdeaWorkflowCard = ({ idea, onUpdate }: IdeaWorkflowCardProps) => {
                   {action.label}
                 </Button>
               ))}
-              {!(idea.stage === 'discovery' || idea.stage === 'basic_validation') && (
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="text-sm font-medium" // <-- removed flex-1 min-w-0 max-w-sm
-                  onClick={e => {
-                    e.stopPropagation(); // Prevents card click
-                    setActionType('add_comment');
-                    setIsActionDialogOpen(true);
-                  }}
-                >
-                  Add Comment
-                </Button>
-              )}
+              
             </div>
           </div>
         </CardContent>

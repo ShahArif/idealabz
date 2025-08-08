@@ -9,10 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { IdeaWorkflowCard } from './IdeaWorkflowCard';
 import { IdeaSubmissionForm } from './IdeaSubmissionForm';
 import { Navigation } from './Navigation';
-import { 
-  Users, 
-  Lightbulb, 
-  TrendingUp, 
+import {
+  Users,
+  Lightbulb,
+  TrendingUp,
   LogOut,
   Plus,
   Filter,
@@ -425,23 +425,8 @@ export const RoleBasedDashboard = () => {
                             <span className="font-medium truncate max-w-[100px] text-primary px-2">{action.user_name}</span>
                             <span className="text-muted-foreground">Updated</span>
                             <span className="font-medium truncate max-w-[230px] text-primary">{action.idea_title}</span>
-                            
+
                           </div>
-                          {/* <div className="flex items-center gap-2 text-xs">
-                            {action.isStatus ? (
-                              <span className="font-semibold capitalize text-blue-700 bg-blue-100 rounded px-2 py-0.5">
-                                {action.type.replace(/_/g, ' ')}
-                              </span>
-                            ) : (
-                              <span className="font-semibold text-green-700 bg-green-100 rounded px-2 py-0.5">Comment</span>
-                            )}
-                            {action.comment && (
-                              <span className="text-muted-foreground truncate max-w-[120px]">- {action.comment}</span>
-                            )}
-                            {action.isStatus && (
-                              <span className="text-muted-foreground">({action.previous_stage} → {action.new_stage})</span>
-                            )}
-                          </div> */}
                         </li>
                       ))}
                     </ul>
@@ -476,20 +461,20 @@ export const RoleBasedDashboard = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Input
+                  {/* <Input
                     type="text"
                     placeholder="Search ideas..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     className="max-w-xs"
-                  />
+                  /> */}
                   <Button onClick={() => setShowSubmissionForm(true)} className="gap-2">
                     <Plus className="h-4 w-4" />
                     Submit New Idea
                   </Button>
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filterIdeas(myIdeas).map((idea) => (
                   <IdeaWorkflowCard key={idea.id} idea={idea} onUpdate={fetchIdeas} />
@@ -517,8 +502,18 @@ export const RoleBasedDashboard = () => {
           {manageableIdeas.length > 0 && (
             <TabsContent value="manage" className="space-y-6">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <h3 className="text-lg font-semibold">Ideas Requiring Your Action</h3>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className='flex gap-2'>
+                  <h3 className="text-lg font-semibold">Ideas Requiring Your Action</h3>
+                  <Badge className='bg-red-200' variant="outline">{manageableIdeas.length} pending</Badge>
+                </div>
+                <div className="flex items-center justify-end gap-2 flex-wrap w-[60%]">
+                  <Input
+                    type="text"
+                    placeholder="Search ideas..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="max-w-xs"
+                  />
                   <Select value={filterStage} onValueChange={setFilterStage}>
                     <SelectTrigger className="max-w-xs w-[140px]">
                       <SelectValue placeholder="Stage" />
@@ -539,17 +534,11 @@ export const RoleBasedDashboard = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="text"
-                    placeholder="Search ideas..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="max-w-xs"
-                  />
-                  <Badge variant="outline">{manageableIdeas.length} pending</Badge>
+
+
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filterIdeas(manageableIdeas).map((idea) => (
                   <IdeaWorkflowCard key={idea.id} idea={idea} onUpdate={fetchIdeas} />
@@ -591,7 +580,7 @@ export const RoleBasedDashboard = () => {
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filterIdeas(ideas).map((idea) => (
                 <IdeaWorkflowCard key={idea.id} idea={idea} onUpdate={fetchIdeas} />
