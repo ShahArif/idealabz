@@ -18,7 +18,11 @@ import {
   Filter,
   Search,
   BarChart3,
-  Settings
+  Settings,
+  Calendar,
+  User,
+  MessageCircle,
+  ArrowRight
 } from 'lucide-react';
 import { UserManagement } from './UserManagement';
 import NotificationBell from './NotificationBell';
@@ -26,6 +30,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Funnel } from 'funnel-react';
+import { Link } from 'react-router-dom';
 
 interface Idea {
   id: string;
@@ -51,6 +56,9 @@ export const RoleBasedDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStage, setFilterStage] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [recentActions, setRecentActions] = useState<any[]>([]);
+  const [recentIdeasCount, setRecentIdeasCount] = useState(5);
+  const [recentIdeasOwners, setRecentIdeasOwners] = useState<Record<string, string>>(/* id -> owner name */ {});
 
   const stageOptions = [
     { value: 'all', label: 'All Stages' },
@@ -90,9 +98,82 @@ export const RoleBasedDashboard = () => {
     }
   };
 
+  // Fetch latest actions (status_updates and comments)
+  useEffect(() => {
+    const fetchActions = async () => {
+      // Fetch latest status_updates
+      const { data: statusUpdates } = await supabase
+        .from('status_updates')
+        .select('id, action, comment, created_at, idea_id, previous_stage, new_stage, updated_by')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      // Fetch latest comments
+      const { data: comments } = await supabase
+        .from('comments')
+        .select('id, content, created_at, idea_id, user_id')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      // Fetch user and idea info for each
+      const actions: any[] = [];
+      if (statusUpdates) {
+        for (const su of statusUpdates) {
+          const userRes = await supabase.from('profiles').select('first_name, last_name').eq('id', su.updated_by).single();
+          const ideaRes = await supabase.from('ideas').select('title').eq('id', su.idea_id).single();
+          console.log(userRes.data.first_name);
+          actions.push({
+            type: su.action,
+            comment: su.comment,
+            created_at: su.created_at,
+            idea_title: ideaRes.data?.title || 'Unknown',
+            user_name: userRes.data?.first_name + ' ' + userRes.data?.last_name || 'Unknown',
+            isStatus: true,
+            previous_stage: su.previous_stage,
+            new_stage: su.new_stage,
+          });
+        }
+      }
+      if (comments) {
+        for (const c of comments) {
+          const userRes = await supabase.from('profiles').select('email').eq('id', c.user_id).single();
+          const ideaRes = await supabase.from('ideas').select('title').eq('id', c.idea_id).single();
+          actions.push({
+            type: 'comment',
+            comment: c.content,
+            created_at: c.created_at,
+            idea_title: ideaRes.data?.title || 'Unknown',
+            user_name: userRes.data?.first_name + ' ' + userRes.data?.last_name || 'Unknown',
+            isStatus: false,
+          });
+        }
+      }
+      // Sort all actions by created_at descending
+      actions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setRecentActions(actions.slice(0, 5));
+    };
+    fetchActions();
+  }, []);
+
   useEffect(() => {
     fetchIdeas();
   }, []);
+
+  // Fetch owners for recent ideas
+  useEffect(() => {
+    const fetchOwners = async () => {
+      const ideasToFetch = [...ideas].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, recentIdeasCount);
+      const ownerIds = Array.from(new Set(ideasToFetch.map(i => i.submitted_by)));
+      const owners: Record<string, string> = {};
+      for (const id of ownerIds) {
+        const { data } = await supabase.from('profiles').select('first_name, last_name, email').eq('id', id).single();
+        owners[id] = data ? (`${data.first_name || ''} ${data.last_name || ''}`.trim() || data.email) : 'Unknown';
+      }
+      setRecentIdeasOwners(owners);
+    };
+    if (ideas.length > 0) fetchOwners();
+  }, [ideas, recentIdeasCount]);
+
+  const pagedRecentIdeas = [...ideas].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, recentIdeasCount);
+  const canLoadMoreIdeas = recentIdeasCount < ideas.length;
 
   const getIdeasByStage = (stage: string) => {
     if (stage === 'all') return ideas;
@@ -162,6 +243,7 @@ export const RoleBasedDashboard = () => {
   const stats = getStageStats();
   const manageableIdeas = getManageableIdeas();
   const myIdeas = getMyIdeas();
+  const recentIdeas = [...ideas].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5);
 
   const funnelData = [
     { label: 'Discovery', quantity: stats.discovery },
@@ -289,34 +371,83 @@ export const RoleBasedDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {role === 'employee' && (
-                    <Button 
-                      className="w-full justify-start gap-2"
-                      onClick={() => setShowSubmissionForm(true)}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Submit New Idea
-                    </Button>
-                  )}
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <Search className="h-4 w-4" />
-                    Search Ideas
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filter by Stage
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="flex flex-col gap-6">
+                {/* Recent Ideas Panel */}
+                <Card style={{ height: 350 }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Lightbulb className="h-5 w-5" />
+                      Recent Ideas
+                    </CardTitle>
+                    <CardDescription>Latest ideas submitted</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[250px] overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent pr-2">
+                    <ul className="divide-y divide-muted-foreground/10 bg-muted/40 rounded-lg shadow-inner">
+                      {pagedRecentIdeas.map(idea => (
+                        <li key={idea.id} className="flex items-center gap-2 text-sm py-2 px-1 hover:bg-muted/60 transition-colors">
+                          <Link to={`/ideas/${idea.id}`} className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="font-medium truncate max-w-[120px] text-primary hover:underline">{idea.title}</span>
+                          </Link>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {recentIdeasOwners[idea.submitted_by] || '...'}
+                          </span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(idea.created_at).toLocaleString()}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    {canLoadMoreIdeas && (
+                      <div className="flex justify-center mt-2">
+                        <Button size="sm" variant="outline" onClick={() => setRecentIdeasCount(c => c + 5)}>
+                          Load More
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+                {/* Latest Actions Panel */}
+                <Card style={{ height: 350 }}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Latest Actions
+                    </CardTitle>
+                    <CardDescription>Recent activity on ideas</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-[250px] overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent pr-2">
+                    <ul className="divide-y divide-muted-foreground/10 bg-muted/40 rounded-lg shadow-inner">
+                      {recentActions.map((action, idx) => (
+                        <li key={idx} className="flex flex-col py-2 px-1 hover:bg-muted/60 transition-colors">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium truncate max-w-[100px] text-primary px-2">{action.user_name}</span>
+                            <span className="text-muted-foreground">Updated</span>
+                            <span className="font-medium truncate max-w-[230px] text-primary">{action.idea_title}</span>
+                            
+                          </div>
+                          {/* <div className="flex items-center gap-2 text-xs">
+                            {action.isStatus ? (
+                              <span className="font-semibold capitalize text-blue-700 bg-blue-100 rounded px-2 py-0.5">
+                                {action.type.replace(/_/g, ' ')}
+                              </span>
+                            ) : (
+                              <span className="font-semibold text-green-700 bg-green-100 rounded px-2 py-0.5">Comment</span>
+                            )}
+                            {action.comment && (
+                              <span className="text-muted-foreground truncate max-w-[120px]">- {action.comment}</span>
+                            )}
+                            {action.isStatus && (
+                              <span className="text-muted-foreground">({action.previous_stage} → {action.new_stage})</span>
+                            )}
+                          </div> */}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
