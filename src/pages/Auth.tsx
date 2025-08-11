@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { signInSchema, signUpSchema } from '@/lib/validations';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 type SignInFormData = z.infer<typeof signInSchema>;
 type SignUpFormData = z.infer<typeof signUpSchema>;
@@ -22,6 +24,7 @@ const Auth = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isAdminMode = searchParams.get('admin') === 'true';
   const isIdeatorMode = window.location.pathname === '/ideator';
+  const { toast } = useToast();
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -49,12 +52,19 @@ const Auth = () => {
   }, [user, loading, navigate]);
 
   const onSignIn = async (data: SignInFormData) => {
+    console.log('Auth: Starting sign in process for:', data.email);
     setIsSubmitting(true);
     try {
       const { error } = await signIn(data.email, data.password);
+      console.log('Auth: Sign in result:', { error, success: !error });
       if (!error) {
+        console.log('Auth: Redirecting to home page');
         navigate('/');
+      } else {
+        console.log('Auth: Sign in failed, staying on auth page');
       }
+    } catch (error) {
+      console.error('Auth: Sign in exception:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -69,6 +79,34 @@ const Auth = () => {
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const testDatabaseConnection = async () => {
+    console.log('Testing database connection...');
+    try {
+      // Test basic connection
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .limit(1);
+      
+      if (error) {
+        console.error('Database connection error:', error);
+        toast({
+          title: "Database Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        console.log('Database connection successful, profiles count:', data?.length);
+        toast({
+          title: "Database Connected",
+          description: `Successfully connected. Found ${data?.length || 0} profiles.`,
+        });
+      }
+    } catch (error) {
+      console.error('Database test exception:', error);
     }
   };
 
@@ -97,6 +135,19 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Add test button for debugging */}
+          <div className="mb-4 p-3 bg-muted rounded-lg">
+            <Button 
+              type="button" 
+              variant="outline" 
+              size="sm" 
+              onClick={testDatabaseConnection}
+              className="w-full"
+            >
+              Test Database Connection
+            </Button>
+          </div>
+          
           {(isAdminMode || isIdeatorMode) ? (
             <div className="space-y-4">
               <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
