@@ -29,9 +29,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('AuthProvider: Setting up auth state listener');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -39,7 +42,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error);
+      }
+      console.log('Initial session check:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -50,6 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
+      console.log('Attempting sign up for:', email);
+      
       // Validate email domain
       if (!email.endsWith('@ideas2it.com')) {
         return { error: { message: 'Only @ideas2it.com email addresses are allowed' } };
@@ -70,12 +79,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (error) {
+        console.error('Sign up error:', error);
         toast({
           title: "Sign up failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log('Sign up successful for:', email);
         toast({
           title: "Account created successfully!",
           description: "Please check your email to confirm your account.",
@@ -84,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { error };
     } catch (error: any) {
+      console.error('Sign up exception:', error);
       const errorMsg = error.message || 'An unexpected error occurred';
       toast({
         title: "Sign up failed",
@@ -96,18 +108,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log('Attempting sign in for:', email);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) {
+        console.error('Sign in error:', error);
         toast({
           title: "Sign in failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log('Sign in successful for:', email);
         toast({
           title: "Welcome back!",
           description: "You have been signed in successfully.",
@@ -116,6 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { error };
     } catch (error: any) {
+      console.error('Sign in exception:', error);
       const errorMsg = error.message || 'An unexpected error occurred';
       toast({
         title: "Sign in failed",
@@ -128,20 +145,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
+      console.log('Attempting sign out');
       const { error } = await supabase.auth.signOut();
       if (error) {
+        console.error('Sign out error:', error);
         toast({
           title: "Sign out failed",
           description: error.message,
           variant: "destructive",
         });
       } else {
+        console.log('Sign out successful');
         toast({
           title: "Signed out",
           description: "You have been signed out successfully.",
         });
       }
     } catch (error: any) {
+      console.error('Sign out exception:', error);
       toast({
         title: "Sign out failed",
         description: error.message || 'An unexpected error occurred',
