@@ -1083,6 +1083,7 @@ const UserResearchPage = ({ ideas, onUpdate }: any) => {
   const [userResearchInsights, setUserResearchInsights] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Load existing data from database
   const loadExistingData = async (ideaId: string) => {
@@ -1116,27 +1117,77 @@ const UserResearchPage = ({ ideas, onUpdate }: any) => {
     
     try {
       setSaving(true);
+      
+      // Get current user ID
+      const { data: { user } } = await (supabase as any).auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Current user ID:', user.id);
+      console.log('Selected idea ID:', selectedIdea.id);
+      console.log('Selected idea submitted_by:', selectedIdea.submitted_by);
+
       const insights = {
         idea_title: selectedIdea.title,
         saved_date: new Date().toISOString(),
         ...formData
       };
       
-      setUserResearchInsights(insights);
-      
-      // Save to database
-      await (supabase as any)
+      // First, try to delete any existing document of this type for this idea
+      // This avoids upsert constraint issues
+      const { error: deleteError } = await (supabase as any)
         .from('idea_documents')
-        .upsert({
+        .delete()
+        .eq('idea_id', selectedIdea.id)
+        .eq('document_type', 'user_research_insights');
+
+      if (deleteError) {
+        console.log('Delete existing document error (this is usually OK):', deleteError);
+      }
+
+      // Now insert the new document
+      const { data, error } = await (supabase as any)
+        .from('idea_documents')
+        .insert({
           idea_id: selectedIdea.id,
           document_type: 'user_research_insights',
           content: insights,
-          created_by: (supabase as any).auth.user()?.id,
-          updated_by: (supabase as any).auth.user()?.id
-        });
+          created_by: user.id,
+          updated_by: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select();
+
+      if (error) {
+        console.error('Insert error details:', error);
+        throw error;
+      }
+
+      // Update local state
+      setUserResearchInsights(insights);
+      
+      // Show success message
+      console.log('User research insights saved successfully!');
+      
+      // Set success state
+      setSaveSuccess(true);
+      
+      // Optionally refresh the data
+      await loadExistingData(selectedIdea.id);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
         
     } catch (error) {
       console.error('Error saving user research insights:', error);
+      // Show detailed error information
+      if (error && typeof error === 'object' && 'message' in error) {
+        alert(`Error saving research insights: ${error.message}\n\nCode: ${(error as any).code}\nDetails: ${(error as any).details}`);
+      } else {
+        alert('Error saving research insights. Please try again.');
+      }
     } finally {
       setSaving(false);
     }
@@ -1461,6 +1512,20 @@ const UserResearchPage = ({ ideas, onUpdate }: any) => {
             </CardContent>
           </Card>
         </>
+      )}
+
+      {/* Success Message */}
+      {saveSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-green-800">
+            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="font-medium">Research insights saved successfully!</span>
+          </div>
+        </div>
       )}
     </div>
   );
