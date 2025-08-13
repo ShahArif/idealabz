@@ -22,8 +22,8 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
-      <Route path="/ideator" element={isEmployee ? <IdeatorDashboard /> : <Auth />} />
-      <Route path="/admin" element={isSuperAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
+      <Route path="/ideator/*" element={isEmployee ? <IdeatorDashboard /> : <Auth />} />
+      <Route path="/admin/*" element={isSuperAdmin ? <AdminDashboard /> : <Navigate to="/auth?admin=true" />} />
       <Route path="/ideas/:id" element={<IdeaDetail />} />
       <Route path="/" element={
         isSuperAdmin ? <Navigate to="/admin" /> : 

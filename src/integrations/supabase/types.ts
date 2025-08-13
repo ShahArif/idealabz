@@ -251,6 +251,44 @@ export type Database = {
         };
         Relationships: [];
       },
+      prd_documents: {
+        Row: {
+          id: string
+          idea_id: string
+          one_pager: string | null
+          full_prd: string | null
+          generated_by: string | null
+          generated_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          idea_id: string
+          one_pager?: string | null
+          full_prd?: string | null
+          generated_by?: string | null
+          generated_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          idea_id?: string
+          one_pager?: string | null
+          full_prd?: string | null
+          generated_by?: string | null
+          generated_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prd_documents_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: true
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
