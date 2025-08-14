@@ -31,6 +31,13 @@ interface UserProfile {
   created_at: string;
 }
 
+// Normalize incoming role values to match app_role enum
+const normalizeRole = (role: string): string => {
+  if (!role) return 'employee';
+  if (role === 'ideator') return 'employee';
+  return role;
+};
+
 export const UserManagement = () => {
   const { role: currentUserRole, getRoleDisplayName } = useUserRole();
   const { roles: availableRoles, loading: rolesLoading } = useRoles();
@@ -116,15 +123,21 @@ export const UserManagement = () => {
       }
 
       if (data.user) {
-        // Update the user's role if different from default
-        if (newUser.role !== 'employee') {
+        // Normalize the chosen role and update if different from default
+        const normalized = normalizeRole(newUser.role);
+        if (normalized !== 'employee') {
           const { error: roleError } = await supabase
             .from('profiles')
-            .update({ role: newUser.role as any })
+            .update({ role: normalized as any })
             .eq('id', data.user.id);
 
           if (roleError) {
             console.error('Error updating user role:', roleError);
+            toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: roleError.message,
+            });
           }
         }
 
@@ -157,12 +170,13 @@ export const UserManagement = () => {
     if (!selectedUser) return;
 
     try {
+      const normalized = normalizeRole(selectedUser.role);
       const { error } = await supabase
         .from('profiles')
         .update({
           first_name: selectedUser.first_name,
           last_name: selectedUser.last_name,
-          role: selectedUser.role as any
+          role: normalized as any
         })
         .eq('id', selectedUser.id);
 

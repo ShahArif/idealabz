@@ -5,6 +5,17 @@ import { Tables } from '@/integrations/supabase/types';
 
 // Removed hardcoded UserRole type
 
+// Canonical list of roles supported by the app_role enum in the database
+const allowedRoles = [
+  'employee',
+  'product_expert',
+  'tech_expert',
+  'leader',
+  'super_admin',
+  'idealabs_core_team',
+  'idea_mentor',
+];
+
 // Hook to fetch all available roles dynamically from the database
 export const useRoles = () => {
   const [roles, setRoles] = useState<string[]>([]);
@@ -17,35 +28,20 @@ export const useRoles = () => {
         const { data: rolesData, error: rolesError } = await supabase.from('roles').select('name');
         
         if (!rolesError && rolesData && rolesData.length > 0) {
-          // If roles table exists and has data, use it
-          setRoles(rolesData.map((r: { name: string }) => r.name));
+          // Normalize and constrain to allowed enum values
+          const normalized = rolesData
+            .map((r: { name: string }) => r.name)
+            .map((name) => (name === 'ideator' ? 'employee' : name))
+            .filter((name) => allowedRoles.includes(name));
+          setRoles(Array.from(new Set(normalized)));
         } else {
-          // Fallback to hardcoded roles if roles table doesn't exist
-          // This ensures the app works even without the roles table
-          const fallbackRoles = [
-            'employee',
-            'product_expert',
-            'tech_expert',
-            'leader',
-            'super_admin',
-            'idealabs_core_team',
-            'idea_mentor',
-          ];
-          setRoles(fallbackRoles);
+          // Fallback to canonical enum-backed roles
+          setRoles(allowedRoles);
         }
       } catch (error) {
         console.error('Error fetching roles:', error);
-        // Fallback to hardcoded roles on error
-        const fallbackRoles = [
-          'employee',
-          'product_expert',
-          'tech_expert',
-          'leader',
-          'super_admin',
-          'idealabs_core_team',
-          'idea_mentor',
-        ];
-        setRoles(fallbackRoles);
+        // Fallback to canonical enum-backed roles on error
+        setRoles(allowedRoles);
       } finally {
         setLoading(false);
       }
